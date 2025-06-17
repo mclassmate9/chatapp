@@ -10,8 +10,8 @@ const server = http.createServer(app);
 const io = socketio(server);
 
 // MongoDB connection
-const MONGO_URI = 'mongodb+srv://chatuser1112:2020happy2021@chatcluster.on1oirb.mongodb.net/chatdb?retryWrites=true&w=majority&appName=ChatCluster
-'; // <--- Replace this with your full connection string
+const MONGO_URI = 'mongodb+srv://chatuser1112:2020happy2021@chatcluster.on1oirb.mongodb.net/chatdb?retryWrites=true&w=majority&appName=ChatCluster';
+ // <--- Replace this with your full connection string
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true

@@ -1,6 +1,15 @@
-"dependencies": {
-  "express": "^4.18.2",
-  "express-session": "^1.17.3",
-  "socket.io": "^4.6.1",
-  "mongoose": "^7.4.0"
+{
+  "name": "chatapp",
+  "version": "1.0.0",
+  "description": "Simple chat app with login and MongoDB support",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "socket.io": "^4.6.1",
+    "mongoose": "^7.4.0"
+  }
 }

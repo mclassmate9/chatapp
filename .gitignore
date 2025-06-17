@@ -1,0 +1,14 @@
+# Ignore environment variable file
+.env
+
+# Ignore node_modules (this folder gets regenerated on install)
+node_modules/
+
+# Ignore log files
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db

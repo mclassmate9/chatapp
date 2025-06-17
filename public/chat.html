@@ -127,66 +127,73 @@
   </div>
 
   <script>
-    let username = '';
-    fetch('/get-username')
-      .then(res => res.json())
-      .then(data => {
-        if (data.username) {
-          username = data.username;
-        } else {
-          window.location.href = '/login.html';
-        }
-      });
+  const socket = io();
+  let username = '';
 
-    const socket = io();
+  // Get current user from server
+  fetch('/api/user')
+    .then(res => res.json())
+    .then(data => {
+      username = data.username;
 
-    socket.on('chat history', (messages) => {
-      const list = document.getElementById('messages');
-      list.innerHTML = '';
-      messages.forEach(renderMessage);
+      // Now that username is available, set up all socket listeners
+      setupSocket();
     });
 
-    socket.on('chat message', renderMessage);
-
+  function setupSocket() {
     function renderMessage(msg) {
       const item = document.createElement('li');
-      const isMine = msg.user === username;
+      const isOwn = msg.user === username;
 
-      item.classList.add(isMine ? 'message-sent' : 'message-received');
+      item.classList.add(isOwn ? 'message-sent' : 'message-received');
+      item.textContent = isOwn ? msg.text : `${msg.user}: ${msg.text}`;
 
-      const time = new Date(msg.time).toLocaleTimeString();
-      item.textContent = isMine
-        ? `[${time}] ${msg.text}`
-        : `[${time}] ${msg.user}: ${msg.text}`;
-
-      if (isMine) {
+      if (isOwn) {
         const delBtn = document.createElement('button');
-        delBtn.textContent = '⛓️‍💥';
+        delBtn.textContent = '🗑️';
         delBtn.style.marginLeft = '10px';
         delBtn.onclick = () => {
-          if (confirm('Delete this message?')) {
-            socket.emit('delete message', msg._id);
-          }
+          socket.emit('delete message', msg._id);
         };
         item.appendChild(delBtn);
       }
 
       document.getElementById('messages').appendChild(item);
+      item.scrollIntoView();
     }
 
-    document.getElementById('form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const input = document.getElementById('input');
-      if (input.value.trim()) {
-        socket.emit('chat message', input.value);
-        input.value = '';
-      }
+    socket.on('chat history', (messages) => {
+      const msgList = document.getElementById('messages');
+      msgList.innerHTML = '';
+      messages.forEach(renderMessage);
     });
 
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      fetch('/logout').then(() => window.location.href = '/login.html');
+    socket.on('chat message', (msg) => {
+      renderMessage(msg);
     });
-  </script>
+
+    socket.on('not-authenticated', () => {
+      window.location.href = '/login.html';
+    });
+  }
+
+  // Message sending
+  document.getElementById('form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('input');
+    if (input.value.trim()) {
+      socket.emit('chat message', input.value.trim());
+      input.value = '';
+    }
+  });
+
+  // Logout
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    fetch('/logout').then(() => {
+      window.location.href = '/login.html';
+    });
+  });
+</script>
 
   <script src="/socket.io/socket.io.js"></script>
 </body>

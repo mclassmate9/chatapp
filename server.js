@@ -22,7 +22,7 @@ io.use((socket, next) => { sessionMiddleware(socket.request, {}, next); });
 
 io.on('connection', async (socket) => { const session = socket.request.session; if (!session.username) { socket.emit('not-authenticated'); return socket.disconnect(); } const username = session.username;
 
-console.log(${username} connected);
+console.log('${username} connected');
 
 const messages = await Message.find().sort({ time: 1 }); socket.emit('chat history', messages);
 
@@ -30,7 +30,7 @@ socket.on('chat message', async (text) => { const newMsg = new Message({ user: u
 
 socket.on('delete message', async (msgId) => { const msg = await Message.findById(msgId); if (msg && msg.user === username) { await Message.deleteOne({ _id: msgId }); const updatedMessages = await Message.find().sort({ time: 1 }); io.emit('chat history', updatedMessages); } });
 
-socket.on('disconnect', () => { console.log(${username} disconnected); }); });
+socket.on('disconnect', () => { console.log('${username} disconnected'); }); });
 
-const PORT = process.env.PORT || 3000; server.listen(PORT, () => { console.log(Server running on port ${PORT}); });
+const PORT = process.env.PORT || 3000; server.listen(PORT, () => { console.log('Server running on port ${PORT}'); });
 

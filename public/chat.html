@@ -1,18 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Chat</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Chat Room</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="chat-container">
-    <div id="messages"></div>
-    <form id="chat-form">
-      <input id="msg" autocomplete="off" placeholder="Type a message..." /><button>Send</button>
-    </form>
-    <button onclick="deleteAll()">Delete All Messages</button>
-  </div>
+  <h2>Chat Room</h2>
+  <ul id="messages"></ul>
+  <form id="form">
+    <input id="input" autocomplete="off" /><button>Send</button>
+  </form>
+  <button onclick="deleteAll()">Delete All Messages</button>
   <script src="/socket.io/socket.io.js"></script>
-  <script src="script.js"></script>
+  <script>
+    const socket = io();
+
+    socket.on('chat history', (messages) => {
+      const list = document.getElementById('messages');
+      list.innerHTML = '';
+      messages.forEach(msg => {
+        const item = document.createElement('li');
+        item.textContent = `[${new Date(msg.time).toLocaleTimeString()}] ${msg.user}: ${msg.text}`;
+        list.appendChild(item);
+      });
+    });
+
+    socket.on('chat message', (msg) => {
+      const item = document.createElement('li');
+      item.textContent = `[${new Date(msg.time).toLocaleTimeString()}] ${msg.user}: ${msg.text}`;
+      document.getElementById('messages').appendChild(item);
+    });
+
+    document.getElementById('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const input = document.getElementById('input');
+      if (input.value) {
+        socket.emit('chat message', input.value);
+        input.value = '';
+      }
+    });
+
+    function deleteAll() {
+      if (confirm("Delete all messages?")) {
+        socket.emit('delete all');
+      }
+    }
+  </script>
 </body>
 </html>

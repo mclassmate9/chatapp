@@ -50,6 +50,11 @@ app.post('/login', (req, res) => {
   }
   return res.send('<h3>Login failed. <a href="/login.html">Try again</a></h3>');
 });
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/login.html');
+  });
+});
 
 io.use((socket, next) => {
   sessionMiddleware(socket.request, {}, next);

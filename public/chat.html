@@ -8,41 +8,64 @@
   <h2>Chat Room</h2>
   <ul id="messages"></ul>
   <form id="form">
-    <input id="input" autocomplete="off" /><button>Send</button>
+    <input id="input" autocomplete="off" placeholder="Type your message..." />
+    <button>Send</button>
   </form>
-<button id="logoutBtn" style="position:absolute; top:10px; right:10px;">Logout</button>
+  
+  <button id="logoutBtn" style="position:absolute; top:10px; right:10px;">Logout</button>
+
+  <!-- Hidden username injected from backend -->
+  <script>
+    let username = '';
+    fetch('/get-username')
+      .then(res => res.json())
+      .then(data => {
+        if (data.username) {
+          username = data.username;
+        } else {
+          window.location.href = '/login.html';
+        }
+      });
+  </script>
+
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
 
+    // Chat history
     socket.on('chat history', (messages) => {
       const list = document.getElementById('messages');
       list.innerHTML = '';
-      messages.forEach(msg => {
-        const item = document.createElement('li');
-        item.textContent = `[${new Date(msg.time).toLocaleTimeString()}] ${msg.user}: ${msg.text}`;
-        list.appendChild(item);
-      });
+      messages.forEach(msg => renderMessage(msg));
     });
 
+    // New incoming message
     socket.on('chat message', (msg) => {
-  const item = document.createElement('li');
-  item.textContent = `${msg.user}: ${msg.text}`;
+      renderMessage(msg);
+    });
 
-  // Show delete button only for your own messages
-  if (msg.user === username) {
-    const delBtn = document.createElement('button');
-    delBtn.textContent = '🗑️';
-    delBtn.style.marginLeft = '10px';
-    delBtn.onclick = () => {
-      socket.emit('delete message', msg._id);
-    };
-    item.appendChild(delBtn);
-  }
+    // Render single message with optional delete
+    function renderMessage(msg) {
+      const item = document.createElement('li');
+      item.textContent = `[${new Date(msg.time).toLocaleTimeString()}] ${msg.user}: ${msg.text}`;
 
-  document.getElementById('messages').appendChild(item);
-});
+      // Add delete button for your own messages
+      if (msg.user === username) {
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '🗑️';
+        delBtn.style.marginLeft = '10px';
+        delBtn.onclick = () => {
+          if (confirm('Delete this message?')) {
+            socket.emit('delete message', msg._id);
+          }
+        };
+        item.appendChild(delBtn);
+      }
 
+      document.getElementById('messages').appendChild(item);
+    }
+
+    // Send message
     document.getElementById('form').addEventListener('submit', function (e) {
       e.preventDefault();
       const input = document.getElementById('input');
@@ -51,12 +74,12 @@
         input.value = '';
       }
     });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      fetch('/logout')
+        .then(() => window.location.href = '/login.html');
+    });
   </script>
-<script>
-  document.getElementById('logoutBtn').addEventListener('click', () => {
-    fetch('/logout')
-      .then(() => window.location.href = '/login.html');
-  });
-</script>
 </body>
 </html>

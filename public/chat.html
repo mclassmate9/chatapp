@@ -1,154 +1,139 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Chat Room</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat App</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background: #f4f4f4;
-    }
+      background-color: #f4f4f4;
+    }.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
 
-    .chat-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
+#logoutBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 8px 12px;
+  background: red;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
 
-    h2 {
-      text-align: center;
-      padding: 10px;
-      background-color: #007bff;
-      color: white;
-      margin: 0;
-    }
+#messages {
+  list-style-type: none;
+  margin: 0;
+  padding: 10px;
+  overflow-y: scroll;
+  flex-grow: 1;
+}
 
-    #messages {
-      list-style-type: none;
-      padding: 10px;
-      flex-grow: 1;
-      overflow-y: auto;
-      margin: 0;
-    }
+#messages li {
+  padding: 8px 12px;
+  margin: 8px;
+  border-radius: 10px;
+  max-width: 70%;
+  clear: both;
+  word-wrap: break-word;
+  position: relative;
+}
 
-    #messages li {
-      padding: 8px 12px;
-      margin: 8px;
-      border-radius: 10px;
-      max-width: 70%;
-      clear: both;
-      word-wrap: break-word;
-      position: relative;
-    }
+.message-sent {
+  background-color: #dcf8c6;
+  float: right;
+  text-align: right;
+}
 
-    .message-sent {
-      background-color: #dcf8c6;
-      float: right;
-      text-align: right;
-    }
+.message-received {
+  background-color: #ffffff;
+  float: left;
+  text-align: left;
+}
 
-    .message-received {
-      background-color: #ffffff;
-      float: left;
-      text-align: left;
-    }
+form {
+  display: flex;
+  padding: 10px;
+  background: #ddd;
+}
 
-    form {
-      display: flex;
-      padding: 10px;
-      background: #ddd;
-    }
+input[type="text"] {
+  flex-grow: 1;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+}
 
-    input[type="text"] {
-      flex-grow: 1;
-      padding: 10px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-    }
+button {
+  margin-left: 10px;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: none;
+  background: #007bff;
+  color: #fff;
+  border-radius: 5px;
+}
 
-    button {
-      margin-left: 10px;
-      padding: 10px 15px;
-      font-size: 16px;
-      border: none;
-      background: #007bff;
-      color: #fff;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+@media (max-width: 600px) {
+  #messages li {
+    font-size: 14px;
+    max-width: 100%;
+  }
 
-    #logoutBtn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      padding: 8px 12px;
-      background: red;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 14px;
-    }
+  input[type="text"] {
+    font-size: 14px;
+  }
 
-    @media (max-width: 600px) {
-      #messages li {
-        font-size: 14px;
-        max-width: 100%;
-      }
+  button {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+}
 
-      input[type="text"] {
-        font-size: 14px;
-      }
-
-      button {
-        font-size: 14px;
-        padding: 8px 12px;
-      }
-
-      #logoutBtn {
-        font-size: 12px;
-        padding: 6px 10px;
-      }
-    }
   </style>
 </head>
 <body>
   <div class="chat-container">
-    <h2>Chat Room</h2>
     <button id="logoutBtn">Logout</button>
     <ul id="messages"></ul>
     <form id="form">
       <input id="input" autocomplete="off" placeholder="Type your message..." />
-      <button type="submit">Send</button>
+      <button>Send</button>
     </form>
-  </div>
+  </div>  <script src="/socket.io/socket.io.js"></script>  <script>
+    const socket = io();
+    let username = '';
 
-  <script>
-  const socket = io();
-  let username = '';
-
-  // Get current user from server
-  fetch('/api/user')
-    .then(res => res.json())
-    .then(data => {
-      username = data.username;
-
-      // Now that username is available, set up all socket listeners
-      setupSocket();
+    socket.on('not-authenticated', () => {
+      window.location.href = '/login.html';
     });
 
-  function setupSocket() {
-    function renderMessage(msg) {
+    socket.on('chat history', (messages) => {
+      const messagesList = document.getElementById('messages');
+      messagesList.innerHTML = '';
+      messages.forEach((msg) => addMessage(msg));
+    });
+
+    socket.on('chat message', (msg) => {
+      addMessage(msg);
+    });
+
+    function addMessage(msg) {
       const item = document.createElement('li');
-      const isOwn = msg.user === username;
+      item.classList.add(
+        msg.user === username ? 'message-sent' : 'message-received'
+      );
+      item.textContent = msg.user === username
+        ? msg.text
+        : `${msg.user}: ${msg.text}`;
 
-      item.classList.add(isOwn ? 'message-sent' : 'message-received');
-      item.textContent = isOwn ? msg.text : `${msg.user}: ${msg.text}`;
-
-      if (isOwn) {
+      if (msg.user === username) {
         const delBtn = document.createElement('button');
         delBtn.textContent = '🗑️';
         delBtn.style.marginLeft = '10px';
@@ -159,42 +144,25 @@
       }
 
       document.getElementById('messages').appendChild(item);
-      item.scrollIntoView();
     }
 
-    socket.on('chat history', (messages) => {
-      const msgList = document.getElementById('messages');
-      msgList.innerHTML = '';
-      messages.forEach(renderMessage);
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('input');
+      if (input.value) {
+        socket.emit('chat message', input.value);
+        input.value = '';
+      }
     });
 
-    socket.on('chat message', (msg) => {
-      renderMessage(msg);
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      fetch('/logout').then(() => window.location.href = '/login.html');
     });
 
-    socket.on('not-authenticated', () => {
-      window.location.href = '/login.html';
-    });
-  }
-
-  // Message sending
-  document.getElementById('form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const input = document.getElementById('input');
-    if (input.value.trim()) {
-      socket.emit('chat message', input.value.trim());
-      input.value = '';
-    }
-  });
-
-  // Logout
-  document.getElementById('logoutBtn').addEventListener('click', () => {
-    fetch('/logout').then(() => {
-      window.location.href = '/login.html';
-    });
-  });
-</script>
-
-  <script src="/socket.io/socket.io.js"></script>
-</body>
+    fetch('/api/user')
+      .then((res) => res.json())
+      .then((data) => {
+        username = data.username;
+      });
+  </script></body>
 </html>

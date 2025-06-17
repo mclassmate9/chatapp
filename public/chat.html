@@ -10,6 +10,7 @@
   <form id="form">
     <input id="input" autocomplete="off" /><button>Send</button>
   </form>
+<button id="logoutBtn" style="position:absolute; top:10px; right:10px;">Logout</button>
   <button onclick="deleteAll()">Delete All Messages</button>
   <script src="/socket.io/socket.io.js"></script>
   <script>
@@ -46,5 +47,11 @@
       }
     }
   </script>
+<script>
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    fetch('/logout')
+      .then(() => window.location.href = '/login.html');
+  });
+</script>
 </body>
 </html>

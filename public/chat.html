@@ -1,20 +1,119 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>Chat Room</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    h2 {
+      text-align: center;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      margin: 0;
+    }
+
+    #messages {
+      list-style-type: none;
+      padding: 10px;
+      flex-grow: 1;
+      overflow-y: auto;
+      margin: 0;
+    }
+
+    #messages li {
+      background: #fff;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 10px;
+      max-width: 90%;
+      word-wrap: break-word;
+    }
+
+    form {
+      display: flex;
+      padding: 10px;
+      background: #ddd;
+    }
+
+    input[type="text"] {
+      flex-grow: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button {
+      margin-left: 10px;
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      background: #007bff;
+      color: #fff;
+      border-radius: 5px;
+    }
+
+    #logoutBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 8px 12px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      #messages li {
+        font-size: 14px;
+        max-width: 100%;
+      }
+
+      input[type="text"] {
+        font-size: 14px;
+      }
+
+      button {
+        font-size: 14px;
+        padding: 8px 12px;
+      }
+
+      #logoutBtn {
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h2>Chat Room</h2>
-  <ul id="messages"></ul>
-  <form id="form">
-    <input id="input" autocomplete="off" placeholder="Type your message..." />
-    <button>Send</button>
-  </form>
-  
-  <button id="logoutBtn" style="position:absolute; top:10px; right:10px;">Logout</button>
+  <div class="chat-container">
+    <h2>Chat Room</h2>
+    <button id="logoutBtn">Logout</button>
+    <ul id="messages"></ul>
+    <form id="form">
+      <input id="input" autocomplete="off" placeholder="Type your message..." />
+      <button type="submit">Send</button>
+    </form>
+  </div>
 
-  <!-- Hidden username injected from backend -->
+  <!-- Get username from backend -->
   <script>
     let username = '';
     fetch('/get-username')
@@ -32,24 +131,20 @@
   <script>
     const socket = io();
 
-    // Chat history
+    // Load chat history
     socket.on('chat history', (messages) => {
       const list = document.getElementById('messages');
       list.innerHTML = '';
-      messages.forEach(msg => renderMessage(msg));
+      messages.forEach(renderMessage);
     });
 
-    // New incoming message
-    socket.on('chat message', (msg) => {
-      renderMessage(msg);
-    });
+    // Listen for new messages
+    socket.on('chat message', renderMessage);
 
-    // Render single message with optional delete
     function renderMessage(msg) {
       const item = document.createElement('li');
       item.textContent = `[${new Date(msg.time).toLocaleTimeString()}] ${msg.user}: ${msg.text}`;
 
-      // Add delete button for your own messages
       if (msg.user === username) {
         const delBtn = document.createElement('button');
         delBtn.textContent = '🗑️';
@@ -69,16 +164,15 @@
     document.getElementById('form').addEventListener('submit', function (e) {
       e.preventDefault();
       const input = document.getElementById('input');
-      if (input.value) {
+      if (input.value.trim()) {
         socket.emit('chat message', input.value);
         input.value = '';
       }
     });
 
-    // Logout
+    // Logout button
     document.getElementById('logoutBtn').addEventListener('click', () => {
-      fetch('/logout')
-        .then(() => window.location.href = '/login.html');
+      fetch('/logout').then(() => window.location.href = '/login.html');
     });
   </script>
 </body>

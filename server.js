@@ -9,30 +9,25 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
-// MongoDB connection
-const MONGO_URI = 'mongodb+srv://chatuser1112:2020happy2021@chatcluster.on1oirb.mongodb.net/chatdb?retryWrites=true&w=majority&appName=ChatCluster';
- // <--- Replace this with your full connection string
+const MONGO_URI = process.env.MONGO_URI;
+
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });
 
-// Message schema
 const messageSchema = new mongoose.Schema({
   user: String,
   text: String,
   time: Date
 });
-
 const Message = mongoose.model('Message', messageSchema);
 
-// Simple user login system
 const users = {
   you: 'pass123',
   friend: 'secret456'
 };
 
-// Session setup
 const sessionMiddleware = session({
   secret: 'chatSecretKey',
   resave: false,
@@ -43,12 +38,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Redirect homepage to login
 app.get('/', (req, res) => {
   res.redirect('/login.html');
 });
 
-// Login route
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   if (users[username] && users[username] === password) {
@@ -58,12 +51,10 @@ app.post('/login', (req, res) => {
   return res.send('<h3>Login failed. <a href="/login.html">Try again</a></h3>');
 });
 
-// Allow socket.io to use sessions
 io.use((socket, next) => {
   sessionMiddleware(socket.request, {}, next);
 });
 
-// Socket.io logic
 io.on('connection', async (socket) => {
   const session = socket.request.session;
   if (!session.username) {
@@ -74,22 +65,15 @@ io.on('connection', async (socket) => {
   const username = session.username;
   console.log(`${username} connected`);
 
-  // Send previous messages from MongoDB
   const messages = await Message.find().sort({ time: 1 });
   socket.emit('chat history', messages);
 
-  // Handle new message
   socket.on('chat message', async (text) => {
-    const newMsg = new Message({
-      user: username,
-      text,
-      time: new Date()
-    });
+    const newMsg = new Message({ user: username, text, time: new Date() });
     await newMsg.save();
     io.emit('chat message', newMsg);
   });
 
-  // Handle deletion of all messages
   socket.on('delete all', async () => {
     await Message.deleteMany({});
     io.emit('chat history', []);
@@ -100,7 +84,6 @@ io.on('connection', async (socket) => {
   });
 });
 
-// Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

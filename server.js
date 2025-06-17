@@ -1,36 +1,104 @@
-// server.js const express = require('express'); const session = require('express-session'); const http = require('http'); const socketio = require('socket.io'); const path = require('path'); const mongoose = require('mongoose'); const MongoStore = require('connect-mongo'); require('dotenv').config();
+const express = require('express');
+const session = require('express-session');
+const http = require('http');
+const socketio = require('socket.io');
+const path = require('path');
+const mongoose = require('mongoose');
+const MongoStore = require('connect-mongo');
+require('dotenv').config();
 
-const app = express(); const server = http.createServer(app); const io = socketio(server);
+const app = express();
+const server = http.createServer(app);
+const io = socketio(server);
 
-// MongoDB Connection mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true, });
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
-const messageSchema = new mongoose.Schema({ user: String, text: String, time: { type: Date, default: Date.now } }); const Message = mongoose.model('Message', messageSchema);
+const messageSchema = new mongoose.Schema({
+  user: String,
+  text: String,
+  time: { type: Date, default: Date.now },
+});
 
-const users = { you: 'pass123', friend: 'secret456' };
+const Message = mongoose.model('Message', messageSchema);
 
-const sessionMiddleware = session({ secret: 'chatSecretKey', resave: false, saveUninitialized: true, store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }) });
+const users = {
+  you: 'pass123',
+  friend: 'secret456',
+};
 
-app.use(express.urlencoded({ extended: true })); app.use(sessionMiddleware); app.use(express.static(path.join(__dirname, 'public')));
+const sessionMiddleware = session({
+  secret: 'chatSecretKey',
+  resave: false,
+  saveUninitialized: true,
+  store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+});
 
-app.post('/login', (req, res) => { const { username, password } = req.body; if (users[username] && users[username] === password) { req.session.username = username; return res.redirect('/chat.html'); } return res.send('<h3>Login failed. <a href="/login.html">Try again</a></h3>'); });
+app.use(express.urlencoded({ extended: true }));
+app.use(sessionMiddleware);
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/logout', (req, res) => { req.session.destroy(() => { res.redirect('/login.html'); }); });
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  if (users[username] && users[username] === password) {
+    req.session.username = username;
+    return res.redirect('/chat.html');
+  }
+  return res.send('<h3>Login failed. <a href="/login.html">Try again</a></h3>');
+});
 
-app.get('/api/user', (req, res) => { if (!req.session.username) return res.status(403).json({}); res.json({ username: req.session.username }); });
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/login.html');
+  });
+});
 
-io.use((socket, next) => { sessionMiddleware(socket.request, {}, next); });
+app.get('/api/user', (req, res) => {
+  if (!req.session.username) return res.status(403).json({});
+  res.json({ username: req.session.username });
+});
 
-io.on('connection', async (socket) => { const session = socket.request.session; if (!session.username) { socket.emit('not-authenticated'); return socket.disconnect(); } const username = session.username;
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, {}, next);
+});
 
-console.log('${username} connected');
+io.on('connection', async (socket) => {
+  const session = socket.request.session;
+  if (!session.username) {
+    socket.emit('not-authenticated');
+    return socket.disconnect();
+  }
 
-const messages = await Message.find().sort({ time: 1 }); socket.emit('chat history', messages);
+  const username = session.username;
+  console.log(`${username} connected`);
 
-socket.on('chat message', async (text) => { const newMsg = new Message({ user: username, text }); await newMsg.save(); io.emit('chat message', newMsg); });
+  const messages = await Message.find().sort({ time: 1 });
+  socket.emit('chat history', messages);
 
-socket.on('delete message', async (msgId) => { const msg = await Message.findById(msgId); if (msg && msg.user === username) { await Message.deleteOne({ _id: msgId }); const updatedMessages = await Message.find().sort({ time: 1 }); io.emit('chat history', updatedMessages); } });
+  socket.on('chat message', async (text) => {
+    const newMsg = new Message({ user: username, text });
+    await newMsg.save();
+    io.emit('chat message', newMsg);
+  });
 
-socket.on('disconnect', () => { console.log('${username} disconnected'); }); });
+  socket.on('delete message', async (msgId) => {
+    const msg = await Message.findById(msgId);
+    if (msg && msg.user === username) {
+      await Message.deleteOne({ _id: msgId });
+      const updatedMessages = await Message.find().sort({ time: 1 });
+      io.emit('chat history', updatedMessages);
+    }
+  });
 
-const PORT = process.env.PORT || 3000; server.listen(PORT, () => { console.log('Server running on port ${PORT}'); });
+  socket.on('disconnect', () => {
+    console.log(`${username} disconnected`);
+  });
+});
 
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

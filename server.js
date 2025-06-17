@@ -1,11 +1,9 @@
-
 const express = require('express');
 const session = require('express-session');
 const http = require('http');
 const socketio = require('socket.io');
 const path = require('path');
 const mongoose = require('mongoose');
-const { ObjectId } = require('mongodb');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,9 +14,10 @@ const MONGO_URI = process.env.MONGO_URI;
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
-});
+}).then(() => console.log('MongoDB connected'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
-// MongoDB Schema
+// MongoDB schema and model
 const messageSchema = new mongoose.Schema({
   user: String,
   text: String,
@@ -26,13 +25,13 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// Dummy users
+// Dummy user credentials
 const users = {
   you: 'pass123',
   friend: 'secret456'
 };
 
-// Session config
+// Session configuration
 const sessionMiddleware = session({
   secret: 'chatSecretKey',
   resave: false,
@@ -63,7 +62,7 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// NEW: Send username to frontend
+// Send current username to frontend
 app.get('/get-username', (req, res) => {
   if (req.session.username) {
     res.json({ username: req.session.username });
@@ -72,12 +71,12 @@ app.get('/get-username', (req, res) => {
   }
 });
 
-// Enable session in socket.io
+// Share session with socket.io
 io.use((socket, next) => {
   sessionMiddleware(socket.request, {}, next);
 });
 
-// Socket.io logic
+// Socket.io events
 io.on('connection', async (socket) => {
   const session = socket.request.session;
   if (!session.username) {
@@ -88,34 +87,37 @@ io.on('connection', async (socket) => {
   const username = session.username;
   console.log(`${username} connected`);
 
-  // Send chat history
+  // Send message history
   const messages = await Message.find().sort({ time: 1 });
   socket.emit('chat history', messages);
 
-  // New message
+  // Handle new messages
   socket.on('chat message', async (text) => {
     const newMsg = new Message({ user: username, text, time: new Date() });
     await newMsg.save();
     io.emit('chat message', newMsg);
   });
 
-  // NEW: Delete individual message
+  // Handle delete individual message
   socket.on('delete message', async (_id) => {
-    const message = await Message.findById(_id);
-    if (message && message.user === username) {
-      await Message.deleteOne({ _id });
-      const updatedMessages = await Message.find().sort({ time: 1 });
-      io.emit('chat history', updatedMessages);
+    try {
+      const message = await Message.findById(_id);
+      if (message && message.user === username) {
+        await Message.deleteOne({ _id });
+        const updatedMessages = await Message.find().sort({ time: 1 });
+        io.emit('chat history', updatedMessages);
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
     }
   });
 
-  // Disconnect
   socket.on('disconnect', () => {
     console.log(`${username} disconnected`);
   });
 });
 
-// Start server
+// Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

@@ -26,10 +26,22 @@
     });
 
     socket.on('chat message', (msg) => {
-      const item = document.createElement('li');
-      item.textContent = `[${new Date(msg.time).toLocaleTimeString()}] ${msg.user}: ${msg.text}`;
-      document.getElementById('messages').appendChild(item);
-    });
+  const item = document.createElement('li');
+  item.textContent = `${msg.user}: ${msg.text}`;
+
+  // Show delete button only for your own messages
+  if (msg.user === username) {
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑️';
+    delBtn.style.marginLeft = '10px';
+    delBtn.onclick = () => {
+      socket.emit('delete message', msg._id);
+    };
+    item.appendChild(delBtn);
+  }
+
+  document.getElementById('messages').appendChild(item);
+});
 
     document.getElementById('form').addEventListener('submit', function (e) {
       e.preventDefault();

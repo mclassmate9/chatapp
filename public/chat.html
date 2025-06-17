@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>Chat Room</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -36,12 +35,25 @@
     }
 
     #messages li {
-      background: #fff;
-      padding: 10px;
-      margin-bottom: 8px;
+      padding: 8px 12px;
+      margin: 8px;
       border-radius: 10px;
-      max-width: 90%;
+      max-width: 70%;
+      clear: both;
       word-wrap: break-word;
+      position: relative;
+    }
+
+    .message-sent {
+      background-color: #dcf8c6;
+      float: right;
+      text-align: right;
+    }
+
+    .message-received {
+      background-color: #ffffff;
+      float: left;
+      text-align: left;
     }
 
     form {
@@ -66,6 +78,7 @@
       background: #007bff;
       color: #fff;
       border-radius: 5px;
+      cursor: pointer;
     }
 
     #logoutBtn {
@@ -100,31 +113,6 @@
         padding: 6px 10px;
       }
     }
-
- #messages li {
-  padding: 8px 12px;
-  margin: 8px;
-  border-radius: 10px;
-  max-width: 70%;
-  clear: both;
-  word-wrap: break-word;
-  position: relative;
-}
-
-/* Sent by you */
-.message-sent {
-  background-color: #dcf8c6;
-  float: right;
-  text-align: right;
-}
-
-/* Received */
-.message-received {
-  background-color: #ffffff;
-  float: left;
-  text-align: left;
-}
-
   </style>
 </head>
 <body>
@@ -138,7 +126,6 @@
     </form>
   </div>
 
-  <!-- Get username from backend -->
   <script>
     let username = '';
     fetch('/get-username')
@@ -150,27 +137,29 @@
           window.location.href = '/login.html';
         }
       });
-  </script>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
     const socket = io();
 
-    // Load chat history
     socket.on('chat history', (messages) => {
       const list = document.getElementById('messages');
       list.innerHTML = '';
       messages.forEach(renderMessage);
     });
 
-    // Listen for new messages
     socket.on('chat message', renderMessage);
 
     function renderMessage(msg) {
       const item = document.createElement('li');
-      item.textContent = `[${new Date(msg.time).toLocaleTimeString()}] ${msg.user}: ${msg.text}`;
+      const isMine = msg.user === username;
 
-      if (msg.user === username) {
+      item.classList.add(isMine ? 'message-sent' : 'message-received');
+
+      const time = new Date(msg.time).toLocaleTimeString();
+      item.textContent = isMine
+        ? `[${time}] ${msg.text}`
+        : `[${time}] ${msg.user}: ${msg.text}`;
+
+      if (isMine) {
         const delBtn = document.createElement('button');
         delBtn.textContent = '🗑️';
         delBtn.style.marginLeft = '10px';
@@ -185,7 +174,6 @@
       document.getElementById('messages').appendChild(item);
     }
 
-    // Send message
     document.getElementById('form').addEventListener('submit', function (e) {
       e.preventDefault();
       const input = document.getElementById('input');
@@ -195,10 +183,11 @@
       }
     });
 
-    // Logout button
     document.getElementById('logoutBtn').addEventListener('click', () => {
       fetch('/logout').then(() => window.location.href = '/login.html');
     });
   </script>
+
+  <script src="/socket.io/socket.io.js"></script>
 </body>
 </html>

@@ -79,11 +79,6 @@ io.on('connection', async (socket) => {
     io.emit('chat message', newMsg);
   });
 
-  socket.on('delete all', async () => {
-    await Message.deleteMany({});
-    io.emit('chat history', []);
-  });
-
   socket.on('disconnect', () => {
     console.log(`${username} disconnected`);
   });

@@ -3,16 +3,30 @@ const session = require('express-session');
 const http = require('http');
 const socketio = require('socket.io');
 const path = require('path');
-const fs = require('fs');
+const mongoose = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
-// File to store chat messages
-const MESSAGE_FILE = path.join(__dirname, 'messages.json');
+// MongoDB connection
+const MONGO_URI = 'mongodb+srv://chatuser1112:2020happy2021@chatcluster.on1oirb.mongodb.net/chatdb?retryWrites=true&w=majority&appName=ChatCluster
+'; // <--- Replace this with your full connection string
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
-// Dummy login credentials
+// Message schema
+const messageSchema = new mongoose.Schema({
+  user: String,
+  text: String,
+  time: Date
+});
+
+const Message = mongoose.model('Message', messageSchema);
+
+// Simple user login system
 const users = {
   you: 'pass123',
   friend: 'secret456'
@@ -25,17 +39,16 @@ const sessionMiddleware = session({
   saveUninitialized: true
 });
 
-// Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Redirect root to login page
+// Redirect homepage to login
 app.get('/', (req, res) => {
   res.redirect('/login.html');
 });
 
-// Login handler
+// Login route
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   if (users[username] && users[username] === password) {
@@ -45,27 +58,13 @@ app.post('/login', (req, res) => {
   return res.send('<h3>Login failed. <a href="/login.html">Try again</a></h3>');
 });
 
-// Socket.io session integration
+// Allow socket.io to use sessions
 io.use((socket, next) => {
   sessionMiddleware(socket.request, {}, next);
 });
 
-// Helper functions to read/write messages
-function loadMessages() {
-  try {
-    const data = fs.readFileSync(MESSAGE_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
-
-function saveMessages(messages) {
-  fs.writeFileSync(MESSAGE_FILE, JSON.stringify(messages, null, 2));
-}
-
-// Socket.io handlers
-io.on('connection', (socket) => {
+// Socket.io logic
+io.on('connection', async (socket) => {
   const session = socket.request.session;
   if (!session.username) {
     socket.emit('not-authenticated');
@@ -75,21 +74,24 @@ io.on('connection', (socket) => {
   const username = session.username;
   console.log(`${username} connected`);
 
-  // Send previous messages
-  const messages = loadMessages();
+  // Send previous messages from MongoDB
+  const messages = await Message.find().sort({ time: 1 });
   socket.emit('chat history', messages);
 
-  // Handle new messages
-  socket.on('chat message', (text) => {
-    const newMsg = { user: username, text, time: new Date().toISOString() };
-    const updatedMessages = [...loadMessages(), newMsg];
-    saveMessages(updatedMessages);
+  // Handle new message
+  socket.on('chat message', async (text) => {
+    const newMsg = new Message({
+      user: username,
+      text,
+      time: new Date()
+    });
+    await newMsg.save();
     io.emit('chat message', newMsg);
   });
 
-  // Handle message deletion
-  socket.on('delete all', () => {
-    saveMessages([]);
+  // Handle deletion of all messages
+  socket.on('delete all', async () => {
+    await Message.deleteMany({});
     io.emit('chat history', []);
   });
 
@@ -101,5 +103,5 @@ io.on('connection', (socket) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

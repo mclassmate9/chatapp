@@ -1,15 +1,20 @@
 {
   "name": "chatapp",
   "version": "1.0.0",
-  "description": "Real-time chat app with login and MongoDB",
+  "description": "Real-time chat app with user login and MongoDB",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
+  "keywords": [],
+  "author": "YourName",
+  "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
+    "connect-mongo": "^4.6.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.19.2",
     "express-session": "^1.17.3",
-    "mongoose": "^7.5.0",
-    "socket.io": "^4.7.2"
+    "mongoose": "^7.6.1",
+    "socket.io": "^4.7.5"
   }
 }

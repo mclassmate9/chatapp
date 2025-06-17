@@ -5,54 +5,49 @@
   <title>Chat App</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f4f4f4;
-    }.chat-container {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f4f4f4;
+}
+
+.chat-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
 }
 
-#logoutBtn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 8px 12px;
-  background: red;
-  color: white;
-  border: none;
-  border-radius: 5px;
-}
-
 #messages {
   list-style-type: none;
-  margin: 0;
   padding: 10px;
-  overflow-y: scroll;
   flex-grow: 1;
+  overflow-y: auto;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 #messages li {
-  padding: 8px 12px;
+  padding: 10px 14px;
   margin: 8px;
   border-radius: 10px;
   max-width: 70%;
-  clear: both;
   word-wrap: break-word;
-  position: relative;
+  clear: both;
+  display: inline-block;
 }
 
+/* Sent messages (you) */
 .message-sent {
+  align-self: flex-end;
   background-color: #dcf8c6;
-  float: right;
   text-align: right;
 }
 
+/* Received messages (friend) */
 .message-received {
+  align-self: flex-start;
   background-color: #ffffff;
-  float: left;
   text-align: left;
 }
 
@@ -80,20 +75,15 @@ button {
   border-radius: 5px;
 }
 
-@media (max-width: 600px) {
-  #messages li {
-    font-size: 14px;
-    max-width: 100%;
-  }
-
-  input[type="text"] {
-    font-size: 14px;
-  }
-
-  button {
-    font-size: 14px;
-    padding: 8px 12px;
-  }
+#logoutBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 8px 12px;
+  background: red;
+  color: white;
+  border: none;
+  border-radius: 5px;
 }
 
   </style>

@@ -109,7 +109,7 @@
        padding: 10px 15px;
   }
 
-    #input[type="text"] {
+    #input {
       flex-grow: 1;
       padding: 12px;
       font-size: 16px;
@@ -117,8 +117,8 @@
       border-radius: 5px;
     }
     
-   #sendBtn {
-      padding: 10px 15px;
+   .sendBtn {
+     padding: 12px 15px;
       font-size: 20px;
       background: #007bff;
       color: #fff;
@@ -162,8 +162,8 @@
 
     <form id="form">
       <div class="input-wrapper">
-      <input id="input" autocomplete="off" placeholder="Type your message..." />
-      <button id="sendBtn" aria-label="send message">&#10148</button>
+      <input id="input" type="text" autocomplete="off" placeholder="Type your message..." />
+      <button class="sendBtn" aria-label="send message" type="submit">&#10148;</button>
     
      </div>
     </form>

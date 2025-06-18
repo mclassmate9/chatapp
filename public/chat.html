@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <title>Chat App</title>
   <style>
     body {
@@ -51,20 +50,18 @@
       background-color: green !important;
     }
 
-   #logoutBtn {
-  background-color: transparent;
-  color: white;
-  border: none;
-  font-size: 20px;
-  margin-left: auto;
-  cursor: pointer;
-}
+    #logoutBtn {
+      background-color: transparent;
+      color: white;
+      border: none;
+      font-size: 20px;
+      margin-left: auto;
+      cursor: pointer;
+    }
 
-#logoutBtn:hover {
-  transform: scale(1.1);
-}
-
-
+    #logoutBtn:hover {
+      transform: scale(1.1);
+    }
 
     #typingIndicator {
       text-align: center;
@@ -162,6 +159,23 @@
       box-shadow: 0 0 5px #007bff;
       transition: box-shadow 0.3s ease-in-out;
     }
+
+    /* New Message Badge */
+    #newMessageBadge {
+      display: none;
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #007bff;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
   </style>
 </head>
 <body>
@@ -173,23 +187,17 @@
     </div>
 
     <div id="typingIndicator"></div>
+    <div id="newMessageBadge">New Messages</div>
 
     <ul id="messages"></ul>
 
     <form id="form">
-     
       <div class="input-wrapper">
         <input id="input" type="text" autocomplete="off" placeholder="Type your message..." />
         <button class="sendBtn" aria-label="send message" type="submit">&#10148;</button>
       </div>
     </form>
-
-    
   </div>
-
- 
-
-
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
@@ -200,6 +208,7 @@
     const messagesList = document.getElementById('messages');
     const typingIndicator = document.getElementById('typingIndicator');
     const statusDot = document.getElementById('user-status');
+    const newMessageBadge = document.getElementById('newMessageBadge');
 
     socket.on('not-authenticated', () => {
       window.location.href = '/login.html';
@@ -226,19 +235,28 @@
       }
     });
 
-    
-    
-
     function scrollToBottom(force = false) {
-  const threshold = 100; // px from bottom considered "at bottom"
-  const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < threshold;
+      const threshold = 100;
+      const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < threshold;
 
-  if (isAtBottom || force) {
-    messagesList.scrollTop = messagesList.scrollHeight;
-  }
-}
+      if (isAtBottom || force) {
+        messagesList.scrollTop = messagesList.scrollHeight;
+        newMessageBadge.style.display = 'none';
+      } else {
+        newMessageBadge.style.display = 'block';
+      }
+    }
 
+    messagesList.addEventListener('scroll', () => {
+      const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100;
+      if (isAtBottom) {
+        newMessageBadge.style.display = 'none';
+      }
+    });
 
+    newMessageBadge.addEventListener('click', () => {
+      scrollToBottom(true);
+    });
 
     function addMessage(msg) {
       const item = document.createElement('li');
@@ -259,7 +277,8 @@
         item.appendChild(delBtn);
       }
 
-      messagesList.appendChild(item);scrollToBottom();
+      messagesList.appendChild(item);
+      scrollToBottom();
     }
 
     document.getElementById('form').addEventListener('submit', (e) => {

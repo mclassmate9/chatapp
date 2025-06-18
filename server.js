@@ -51,11 +51,9 @@ app.post('/login', (req, res) => {
     req.session.username = username;
 
     if (remember) {
-      // Set session cookie to last 30 days
-      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30;
+      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30; // 30 days
     } else {
-      // Session expires when browser closes
-      req.session.cookie.expires = false;
+      req.session.cookie.expires = false; // session ends with browser close
     }
 
     return res.redirect('/chat.html');
@@ -75,6 +73,7 @@ app.get('/api/user', (req, res) => {
   res.json({ username: req.session.username });
 });
 
+// Socket.io session middleware
 io.use((socket, next) => {
   sessionMiddleware(socket.request, {}, next);
 });
@@ -105,6 +104,11 @@ io.on('connection', async (socket) => {
       const updatedMessages = await Message.find().sort({ time: 1 });
       io.emit('chat history', updatedMessages);
     }
+  });
+
+  // ✅ Typing Indicator
+  socket.on('typing', () => {
+    socket.broadcast.emit('typing', username);
   });
 
   socket.on('disconnect', () => {

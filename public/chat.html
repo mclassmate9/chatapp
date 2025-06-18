@@ -214,7 +214,7 @@
     socket.on('chat history', (messages) => {
       messagesList.innerHTML = '';
       messages.forEach((msg) => addMessage(msg));
-      scrollToBottom();
+      scrollToBottom(true);
     });
 
     socket.on('chat message', (msg) => {
@@ -235,11 +235,15 @@
     
     
 
-    function scrollToBottom() {
-  setTimeout(() => {
+    function scrollToBottom(force = false) {
+  const threshold = 100; // px from bottom considered "at bottom"
+  const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < threshold;
+
+  if (isAtBottom || force) {
     messagesList.scrollTop = messagesList.scrollHeight;
-  }, 100); // Small delay ensures DOM is updated first
+  }
 }
+
 
 
     function addMessage(msg) {

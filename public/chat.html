@@ -18,7 +18,7 @@
       height: 100vh;
     }
 
-    #messages {
+    #chat-box {
       list-style-type: none;
       padding: 10px;
       flex-grow: 1;
@@ -28,7 +28,7 @@
       flex-direction: column;
     }
 
-    #messages li {
+    #chat-box li {
       padding: 10px 14px;
       margin: 8px;
       border-radius: 10px;
@@ -90,7 +90,7 @@
 <body>
   <div class="chat-container">
     <button id="logoutBtn">Logout</button>
-    <ul id="messages"></ul>
+    <ul id="chat-box"></ul>
     <form id="form">
       <input id="input" autocomplete="off" placeholder="Type your message..." />
       <button>Send</button>
@@ -107,13 +107,15 @@
     });
 
     socket.on('chat history', (messages) => {
-      const messagesList = document.getElementById('messages');
+      const messagesList = document.getElementById('chat-box');
       messagesList.innerHTML = '';
       messages.forEach((msg) => addMessage(msg));
+      scrollToBottom(); // scroll after history loaded
     });
 
     socket.on('chat message', (msg) => {
       addMessage(msg);
+      scrollToBottom(); // scroll on new message
     });
 
     function addMessage(msg) {
@@ -135,7 +137,12 @@
         item.appendChild(delBtn);
       }
 
-      document.getElementById('messages').appendChild(item);
+      document.getElementById('chat-box').appendChild(item);
+    }
+
+    function scrollToBottom() {
+      const chatBox = document.getElementById('chat-box');
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     document.getElementById('form').addEventListener('submit', (e) => {

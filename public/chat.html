@@ -35,6 +35,18 @@
       z-index: 2;
     }
 
+     .chat-header {
+         position: sticky;
+         top: 0;
+         background: #f4f4f4;
+         padding: 10px;
+         z-index: 100;
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         flex-wrap: wrap;
+         border-bottom: 1px solid #ccc;
+     } 
     #typingIndicator {
       padding: 8px 12px;
       text-align: center;
@@ -118,15 +130,17 @@
       box-shadow: 0 0 5px #007bff;
       transition: box-shadow 0.3s ease-in-out;
     }
+                 
   </style>
 </head>
 <body>
   <div class="chat-container">
+    <div class="chat-header">
     <button id="logoutBtn">Logout</button>
 
     <!-- ✅ Typing indicator moved here -->
     <div id="typingIndicator"></div>
-
+    </div>
     <ul id="messages"></ul>
 
     <form id="form">

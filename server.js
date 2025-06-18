@@ -45,11 +45,22 @@ app.use(sessionMiddleware);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/login', (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, remember } = req.body;
+
   if (users[username] && users[username] === password) {
     req.session.username = username;
+
+    if (remember) {
+      // Set session cookie to last 30 days
+      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30;
+    } else {
+      // Session expires when browser closes
+      req.session.cookie.expires = false;
+    }
+
     return res.redirect('/chat.html');
   }
+
   return res.send('<h3>Login failed. <a href="/login.html">Try again</a></h3>');
 });
 

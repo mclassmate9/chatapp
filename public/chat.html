@@ -22,6 +22,33 @@
       position: relative;
     }
 
+    .chat-header {
+      position: sticky;
+      top: 0;
+      background: #007bff;
+      color: white;
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #chat-username {
+      font-weight: bold;
+    }
+
+    #user-status {
+      font-size: 14px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      background-color: red;
+    }
+
+    .online {
+      background-color: green !important;
+    }
+
     #logoutBtn {
       position: absolute;
       top: 10px;
@@ -35,24 +62,14 @@
       z-index: 2;
     }
 
-     .chat-header {
-         position: sticky;
-         top: 0;
-         background: #f4f4f4;
-         padding: 10px;
-         z-index: 100;
-         display: flex;
-         justify-content: space-between;
-         align-items: center;
-         flex-wrap: wrap;
-         border-bottom: 1px solid #ccc;
-     } 
     #typingIndicator {
-      padding: 8px 12px;
+      width: 100%;
       text-align: center;
-      color: gray;
       font-style: italic;
-      margin-top: 40px;
+      color: #333;
+      font-size: 14px;
+      background: #eaeaea;
+      padding: 4px 0;
     }
 
     #messages {
@@ -102,43 +119,35 @@
     }
 
     .input-wrapper {
-       display: flex;
-       align-items: center;
-       background: #fff;
-       border-radius: 25px;
-       padding: 10px 15px;
-  }
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 25px;
+      padding: 10px 15px;
+      width: 100%;
+    }
 
     #input {
-      flex-grow: 1;
+      flex: 1;
       padding: 12px;
       font-size: 16px;
       border: none;
-      border-radius: 5px;
+      border-radius: 25px;
     }
-    
-   .sendBtn {
-     padding: 12px 15px;
+
+    .sendBtn {
+      padding: 10px 16px;
       font-size: 20px;
-      background: #007bff;
-      color: #fff;
-      border-radius: 20px;
-      cursor: pointer;
-}
-
-    button {
       margin-left: 10px;
-      padding: 12px 15px;
-      font-size: 16px;
-      border: none;
       background: #007bff;
       color: #fff;
-      border-radius: 20px;
+      border-radius: 50%;
+      border: none;
       cursor: pointer;
     }
 
-    button:hover {
-      transform: scale(1.05);
+    .sendBtn:hover {
+      transform: scale(1.1);
       transition: transform 0.2s ease-in-out;
     }
 
@@ -147,27 +156,27 @@
       box-shadow: 0 0 5px #007bff;
       transition: box-shadow 0.3s ease-in-out;
     }
-                 
   </style>
 </head>
 <body>
   <div class="chat-container">
     <div class="chat-header">
-    <button id="logoutBtn">Logout</button>
-
-    <!-- ✅ Typing indicator moved here -->
-    <div id="typingIndicator"></div>
+      <span id="chat-username">Chat</span>
+      <span id="user-status" class="offline">Offline</span>
     </div>
+
+    <div id="typingIndicator"></div>
+
     <ul id="messages"></ul>
 
     <form id="form">
       <div class="input-wrapper">
-      <input id="input" type="text" autocomplete="off" placeholder="Type your message..." />
-      <button class="sendBtn" aria-label="send message" type="submit">&#10148;</button>
-    
-     </div>
+        <input id="input" type="text" autocomplete="off" placeholder="Type your message..." />
+        <button class="sendBtn" aria-label="send message" type="submit">&#10148;</button>
+      </div>
     </form>
-  
+    <button id="logoutBtn">Logout</button>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
@@ -177,6 +186,7 @@
 
     const messagesList = document.getElementById('messages');
     const typingIndicator = document.getElementById('typingIndicator');
+    const statusDot = document.getElementById('user-status');
 
     socket.on('not-authenticated', () => {
       window.location.href = '/login.html';
@@ -235,7 +245,7 @@
       if (input.value.trim()) {
         socket.emit('chat message', input.value.trim());
         input.value = '';
-        socket.emit('typing', false); // stop typing
+        socket.emit('typing', false);
       }
     });
 
@@ -251,6 +261,15 @@
       .then((res) => res.json())
       .then((data) => {
         username = data.username;
+        document.getElementById('chat-username').textContent = `Chat with ${username}`;
+        statusDot.classList.remove('offline');
+        statusDot.classList.add('online');
+        statusDot.textContent = 'Online';
+      })
+      .catch(() => {
+        statusDot.classList.remove('online');
+        statusDot.classList.add('offline');
+        statusDot.textContent = 'Offline';
       });
   </script>
 </body>

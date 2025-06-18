@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
   <title>Chat App</title>
   <style>
     body {
@@ -49,18 +51,27 @@
       background-color: green !important;
     }
 
-    #logoutBtn {
-      margin: 10px;
-      align-self: flex-end;
-      padding: 8px 16px;
-      background: red;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-      position: relative;
-      z-index: 2;
-    }
+   #logoutBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  padding: 15px;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transition: transform 0.2s ease-in-out;
+}
+
+#logoutBtn:hover {
+  transform: scale(1.1);
+}
+
+
 
     #typingIndicator {
       text-align: center;
@@ -172,7 +183,7 @@
     <ul id="messages"></ul>
 
     <form id="form">
-      <button id="logoutBtn">Logout</button>
+     
       <div class="input-wrapper">
         <input id="input" type="text" autocomplete="off" placeholder="Type your message..." />
         <button class="sendBtn" aria-label="send message" type="submit">&#10148;</button>
@@ -181,6 +192,10 @@
 
     
   </div>
+
+ 
+<button id="logoutBtn" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+
 
   <script src="/socket.io/socket.io.js"></script>
   <script>

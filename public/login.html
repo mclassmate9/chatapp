@@ -43,6 +43,18 @@
       border-radius: 8px;
     }
 
+    .toggle-password {
+      display: flex;
+      align-items: center;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      color: #444;
+    }
+
+    .toggle-password input {
+      margin-right: 8px;
+    }
+
     .login-container button {
       width: 100%;
       padding: 12px;
@@ -71,9 +83,22 @@
   <form class="login-container" method="POST" action="/login">
     <h2>Login</h2>
     <input type="text" name="username" placeholder="Username" required />
-    <input type="password" name="password" placeholder="Password" required />
+    <input id="password" type="password" name="password" placeholder="Password" required />
+    
+    <label class="toggle-password">
+      <input type="checkbox" onclick="togglePassword()" />
+      Show Password
+    </label>
+
     <button type="submit">Sign In</button>
     <small>Only "you" and "friend" are valid users.</small>
   </form>
+
+  <script>
+    function togglePassword() {
+      const pwd = document.getElementById("password");
+      pwd.type = pwd.type === "password" ? "text" : "password";
+    }
+  </script>
 </body>
 </html>

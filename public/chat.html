@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <title>Chat App</title>
   <style>
     body {
@@ -51,28 +50,43 @@
     }
 
     #logoutBtn {
-      background-color: transparent;
+      position: fixed;
+      bottom: 80px;
+      right: 15px;
+      background: red;
       color: white;
       border: none;
-      font-size: 20px;
-      margin-left: auto;
+      border-radius: 50%;
+      padding: 14px 18px;
+      font-size: 16px;
       cursor: pointer;
-    }
-
-    #logoutBtn:hover {
-      transform: scale(1.1);
+      z-index: 1001;
     }
 
     #typingIndicator {
+      width: 100%;
       text-align: center;
       font-style: italic;
       color: #333;
       font-size: 14px;
       background: #eaeaea;
-      padding: 6px 0;
-      position: sticky;
-      top: 50px;
-      z-index: 999;
+      padding: 4px 0;
+    }
+
+    #newMessageBadge {
+      display: none;
+      position: absolute;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #007bff;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 1000;
     }
 
     #messages {
@@ -126,13 +140,13 @@
       align-items: center;
       background: #fff;
       border-radius: 25px;
-      padding: 6px 10px;
+      padding: 10px 15px;
       width: 100%;
     }
 
     #input {
       flex: 1;
-      padding: 12px 16px;
+      padding: 12px;
       font-size: 16px;
       border: none;
       border-radius: 25px;
@@ -159,23 +173,6 @@
       box-shadow: 0 0 5px #007bff;
       transition: box-shadow 0.3s ease-in-out;
     }
-
-    /* New Message Badge */
-    #newMessageBadge {
-      display: none;
-      position: absolute;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #007bff;
-      color: white;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 14px;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      z-index: 10;
-    }
   </style>
 </head>
 <body>
@@ -183,7 +180,6 @@
     <div class="chat-header">
       <span id="chat-username">Chat</span>
       <span id="user-status" class="offline">Offline</span>
-      <button id="logoutBtn" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
     </div>
 
     <div id="typingIndicator"></div>
@@ -197,6 +193,8 @@
         <button class="sendBtn" aria-label="send message" type="submit">&#10148;</button>
       </div>
     </form>
+
+    <button id="logoutBtn">⎋</button>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -209,6 +207,52 @@
     const typingIndicator = document.getElementById('typingIndicator');
     const statusDot = document.getElementById('user-status');
     const newMessageBadge = document.getElementById('newMessageBadge');
+
+    // Scroll to bottom logic
+    function scrollToBottom(force = false) {
+      const threshold = 100;
+      const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < threshold;
+
+      if (isAtBottom || force) {
+        messagesList.scrollTop = messagesList.scrollHeight;
+        newMessageBadge.style.display = 'none';
+      } else {
+        newMessageBadge.style.display = 'block';
+      }
+    }
+
+    newMessageBadge.addEventListener('click', () => {
+      scrollToBottom(true);
+    });
+
+    messagesList.addEventListener('scroll', () => {
+      const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100;
+      if (isAtBottom) {
+        newMessageBadge.style.display = 'none';
+      }
+    });
+
+    function addMessage(msg) {
+      const item = document.createElement('li');
+      const isSelf = msg.user === username;
+      item.classList.add(isSelf ? 'message-sent' : 'message-received');
+      item.textContent = isSelf ? msg.text : `${msg.user}: ${msg.text}`;
+
+      if (isSelf) {
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '🗑️';
+        delBtn.style.marginLeft = '10px';
+        delBtn.style.background = 'transparent';
+        delBtn.style.border = 'none';
+        delBtn.style.cursor = 'pointer';
+        delBtn.onclick = () => {
+          socket.emit('delete message', msg._id);
+        };
+        item.appendChild(delBtn);
+      }
+
+      messagesList.appendChild(item);
+    }
 
     socket.on('not-authenticated', () => {
       window.location.href = '/login.html';
@@ -235,52 +279,6 @@
       }
     });
 
-    function scrollToBottom(force = false) {
-      const threshold = 100;
-      const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < threshold;
-
-      if (isAtBottom || force) {
-        messagesList.scrollTop = messagesList.scrollHeight;
-        newMessageBadge.style.display = 'none';
-      } else {
-        newMessageBadge.style.display = 'block';
-      }
-    }
-
-    messagesList.addEventListener('scroll', () => {
-      const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100;
-      if (isAtBottom) {
-        newMessageBadge.style.display = 'none';
-      }
-    });
-
-    newMessageBadge.addEventListener('click', () => {
-      scrollToBottom(true);
-    });
-
-    function addMessage(msg) {
-      const item = document.createElement('li');
-      const isSelf = msg.user === username;
-      item.classList.add(isSelf ? 'message-sent' : 'message-received');
-      item.textContent = isSelf ? msg.text : `${msg.user}: ${msg.text}`;
-
-      if (isSelf) {
-        const delBtn = document.createElement('button');
-        delBtn.textContent = '🗑️';
-        delBtn.style.marginLeft = '10px';
-        delBtn.style.background = 'transparent';
-        delBtn.style.border = 'none';
-        delBtn.style.cursor = 'pointer';
-        delBtn.onclick = () => {
-          socket.emit('delete message', msg._id);
-        };
-        item.appendChild(delBtn);
-      }
-
-      messagesList.appendChild(item);
-      scrollToBottom();
-    }
-
     document.getElementById('form').addEventListener('submit', (e) => {
       e.preventDefault();
       const input = document.getElementById('input');
@@ -296,7 +294,9 @@
     });
 
     document.getElementById('logoutBtn').addEventListener('click', () => {
-      fetch('/logout').then(() => (window.location.href = '/login.html'));
+      if (confirm('Are you sure you want to logout?')) {
+        fetch('/logout').then(() => (window.location.href = '/login.html'));
+      }
     });
 
     fetch('/api/user')

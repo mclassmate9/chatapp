@@ -33,8 +33,11 @@ const users = {
 const sessionMiddleware = session({
   secret: 'chatSecretKey',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+  cookie: {
+    maxAge: null // default, can be overridden at login
+  }
 });
 
 app.use(express.urlencoded({ extended: true }));

@@ -50,15 +50,15 @@
     }
 
     #logoutBtn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      padding: 8px 12px;
+      margin: 10px;
+      align-self: flex-end;
+      padding: 8px 16px;
       background: red;
       color: white;
       border: none;
       border-radius: 20px;
       cursor: pointer;
+      position: relative;
       z-index: 2;
     }
 
@@ -172,13 +172,14 @@
     <ul id="messages"></ul>
 
     <form id="form">
+      <button id="logoutBtn">Logout</button>
       <div class="input-wrapper">
         <input id="input" type="text" autocomplete="off" placeholder="Type your message..." />
         <button class="sendBtn" aria-label="send message" type="submit">&#10148;</button>
       </div>
     </form>
 
-    <button id="logoutBtn">Logout</button>
+    
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -216,34 +217,13 @@
       }
     });
 
-    socket.on('user-online', (user) => {
-      if (user !== username) {
-        const notice = document.createElement('div');
-        notice.innerText = `${user} is online`;
-        notice.style.background = '#ffc107';
-        notice.style.padding = '5px';
-        notice.style.textAlign = 'center';
-        notice.style.fontSize = '14px';
-        messagesList.appendChild(notice);
-        scrollToBottom();
-      }
-    });
-
-    socket.on('user-offline', (user) => {
-      if (user !== username) {
-        const notice = document.createElement('div');
-        notice.innerText = `${user} went offline`;
-        notice.style.background = '#ffc107';
-        notice.style.padding = '5px';
-        notice.style.textAlign = 'center';
-        notice.style.fontSize = '14px';
-        messagesList.appendChild(notice);
-        scrollToBottom();
-      }
-    });
+    
+    
 
     function scrollToBottom() {
+      setTimeout(() => {
       messagesList.scrollTop = messagesList.scrollHeight;
+    }, 100);
     }
 
     function addMessage(msg) {

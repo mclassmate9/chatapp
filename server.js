@@ -36,7 +36,7 @@ const sessionMiddleware = session({
   saveUninitialized: false,
   store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
   cookie: {
-    maxAge: null // default, can be overridden at login
+    maxAge: null
   }
 });
 
@@ -53,7 +53,7 @@ app.post('/login', (req, res) => {
     if (remember) {
       req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30; // 30 days
     } else {
-      req.session.cookie.expires = false; // session ends with browser close
+      req.session.cookie.expires = false;
     }
 
     return res.redirect('/chat.html');
@@ -73,10 +73,13 @@ app.get('/api/user', (req, res) => {
   res.json({ username: req.session.username });
 });
 
-// Socket.io session middleware
+// Apply session middleware to socket.io
 io.use((socket, next) => {
   sessionMiddleware(socket.request, {}, next);
 });
+
+// Track online users
+const onlineUsers = new Set();
 
 io.on('connection', async (socket) => {
   const session = socket.request.session;
@@ -87,16 +90,23 @@ io.on('connection', async (socket) => {
 
   const username = session.username;
   console.log(`${username} connected`);
+  onlineUsers.add(username);
 
+  // Notify others
+  socket.broadcast.emit('user-online', username);
+
+  // Send chat history
   const messages = await Message.find().sort({ time: 1 });
   socket.emit('chat history', messages);
 
+  // Message sent
   socket.on('chat message', async (text) => {
     const newMsg = new Message({ user: username, text });
     await newMsg.save();
     io.emit('chat message', newMsg);
   });
 
+  // Delete message
   socket.on('delete message', async (msgId) => {
     const msg = await Message.findById(msgId);
     if (msg && msg.user === username) {
@@ -106,13 +116,16 @@ io.on('connection', async (socket) => {
     }
   });
 
-  // ✅ Typing Indicator
+  // Typing Indicator
   socket.on('typing', () => {
     socket.broadcast.emit('typing', username);
   });
 
+  // Disconnect
   socket.on('disconnect', () => {
     console.log(`${username} disconnected`);
+    onlineUsers.delete(username);
+    socket.broadcast.emit('user-offline', username);
   });
 });
 

@@ -101,7 +101,15 @@
       z-index: 1;
     }
 
-    input[type="text"] {
+    .input-wrapper {
+       display: flex;
+       align-items: center;
+       background: #fff;
+       border-radius: 25px;
+       padding: 10px 15px;
+  }
+
+    #input[type="text"] {
       flex-grow: 1;
       padding: 12px;
       font-size: 16px;
@@ -153,10 +161,13 @@
     <ul id="messages"></ul>
 
     <form id="form">
+      <div class="input-wrapper">
       <input id="input" autocomplete="off" placeholder="Type your message..." />
       <button id="sendBtn" aria-label="send message">&#10148</button>
+    
+     </div>
     </form>
-  </div>
+  
 
   <script src="/socket.io/socket.io.js"></script>
   <script>

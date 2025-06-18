@@ -127,71 +127,89 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    let username = '';
+<script>
+  const socket = io();
+  let username = '';
+  let typingTimeout;
 
-    const messagesList = document.getElementById('messages');
+  const messagesList = document.getElementById('messages');
+  const typingIndicator = document.getElementById('typing-indicator');
 
-    socket.on('not-authenticated', () => {
-      window.location.href = '/login.html';
-    });
+  socket.on('not-authenticated', () => {
+    window.location.href = '/login.html';
+  });
 
-    socket.on('chat history', (messages) => {
-      messagesList.innerHTML = '';
-      messages.forEach((msg) => addMessage(msg));
-      scrollToBottom();
-    });
+  socket.on('chat history', (messages) => {
+    messagesList.innerHTML = '';
+    messages.forEach((msg) => addMessage(msg));
+    scrollToBottom();
+  });
 
-    socket.on('chat message', (msg) => {
-      addMessage(msg);
-      scrollToBottom();
-    });
+  socket.on('chat message', (msg) => {
+    addMessage(msg);
+    scrollToBottom();
+  });
 
-    function scrollToBottom() {
-      messagesList.scrollTop = messagesList.scrollHeight;
+  socket.on('typing', (user) => {
+    if (user !== username) {
+      typingIndicator.textContent = `${user} is typing...`;
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        typingIndicator.textContent = '';
+      }, 2000);
+    }
+  });
+
+  function scrollToBottom() {
+    messagesList.scrollTop = messagesList.scrollHeight;
+  }
+
+  function addMessage(msg) {
+    const item = document.createElement('li');
+    const isSelf = msg.user === username;
+    item.classList.add(isSelf ? 'message-sent' : 'message-received');
+    item.textContent = isSelf ? msg.text : `${msg.user}: ${msg.text}`;
+
+    if (isSelf) {
+      const delBtn = document.createElement('button');
+      delBtn.textContent = '🗑️';
+      delBtn.style.marginLeft = '10px';
+      delBtn.style.background = 'transparent';
+      delBtn.style.border = 'none';
+      delBtn.style.cursor = 'pointer';
+      delBtn.onclick = () => {
+        socket.emit('delete message', msg._id);
+      };
+      item.appendChild(delBtn);
     }
 
-    function addMessage(msg) {
-      const item = document.createElement('li');
-      const isSelf = msg.user === username;
-      item.classList.add(isSelf ? 'message-sent' : 'message-received');
-      item.textContent = isSelf ? msg.text : `${msg.user}: ${msg.text}`;
+    messagesList.appendChild(item);
+  }
 
-      if (isSelf) {
-        const delBtn = document.createElement('button');
-        delBtn.textContent = '🗑️';
-        delBtn.style.marginLeft = '10px';
-        delBtn.style.background = 'transparent';
-        delBtn.style.border = 'none';
-        delBtn.style.cursor = 'pointer';
-        delBtn.onclick = () => {
-          socket.emit('delete message', msg._id);
-        };
-        item.appendChild(delBtn);
-      }
-
-      messagesList.appendChild(item);
+  document.getElementById('form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('input');
+    if (input.value.trim()) {
+      socket.emit('chat message', input.value.trim());
+      input.value = '';
+      socket.emit('typing', false); // stop typing
     }
+  });
 
-    document.getElementById('form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const input = document.getElementById('input');
-      if (input.value.trim()) {
-        socket.emit('chat message', input.value.trim());
-        input.value = '';
-      }
+  document.getElementById('input').addEventListener('input', () => {
+    socket.emit('typing', true);
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    fetch('/logout').then(() => (window.location.href = '/login.html'));
+  });
+
+  fetch('/api/user')
+    .then((res) => res.json())
+    .then((data) => {
+      username = data.username;
     });
+</script>
 
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      fetch('/logout').then(() => (window.location.href = '/login.html'));
-    });
-
-    fetch('/api/user')
-      .then((res) => res.json())
-      .then((data) => {
-        username = data.username;
-      });
-  </script>
 </body>
 </html>

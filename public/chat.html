@@ -10,37 +10,49 @@
       margin: 0;
       padding: 0;
       background: #f4f4f4;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     .chat-container {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      height: 100vh;
+      position: relative;
     }
 
-    #chat-box {
+    #logoutBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 8px 12px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    #messages {
       list-style-type: none;
       padding: 10px;
-      flex-grow: 1;
+      flex: 1;
       overflow-y: auto;
       margin: 0;
       display: flex;
       flex-direction: column;
+      scroll-behavior: smooth;
     }
 
-    #chat-box li {
+    #messages li {
       padding: 10px 14px;
       margin: 8px;
       border-radius: 10px;
       max-width: 70%;
       word-wrap: break-word;
-      display: inline-block;
       animation: fadeIn 0.3s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     .message-sent {
@@ -55,122 +67,73 @@
       text-align: left;
     }
 
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     form {
       display: flex;
       padding: 10px;
       background: #ddd;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
+      position: sticky;
+      bottom: 0;
+      z-index: 1;
     }
 
     input[type="text"] {
-      flex: 1;
-      padding: 14px;
+      flex-grow: 1;
+      padding: 12px;
       font-size: 16px;
       border: none;
-      border-radius: 8px;
-      margin-right: 10px;
-      box-sizing: border-box;
-      transition: box-shadow 0.3s ease-in-out;
+      border-radius: 5px;
+    }
+
+    button {
+      margin-left: 10px;
+      padding: 12px 15px;
+      font-size: 16px;
+      border: none;
+      background: #007bff;
+      color: #fff;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      transition: transform 0.2s ease-in-out;
     }
 
     input[type="text"]:focus {
       outline: none;
       box-shadow: 0 0 5px #007bff;
-    }
-
-    button {
-      padding: 14px 20px;
-      font-size: 16px;
-      border: none;
-      background: #007bff;
-      color: #fff;
-      border-radius: 8px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: transform 0.2s ease-in-out;
-    }
-
-    button:hover {
-      transform: scale(1.05);
-    }
-
-    #logoutBtn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      padding: 8px 12px;
-      background: red;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: transform 0.2s ease-in-out;
-    }
-
-    #logoutBtn:hover {
-      transform: scale(1.05);
-    }
-
-    #loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: bold;
-      z-index: 9999;
+      transition: box-shadow 0.3s ease-in-out;
     }
   </style>
 </head>
 <body>
-  <div id="loading-overlay">Plz wait bro Connecting to server...</div>
-
   <div class="chat-container">
     <button id="logoutBtn">Logout</button>
-    <ul id="chat-box"></ul>
+    <ul id="messages"></ul>
     <form id="form">
       <input id="input" autocomplete="off" placeholder="Type your message..." />
-      <button>Send</button>
+      <button type="submit">Send</button>
     </form>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io({ timeout: 5000 });
+    const socket = io();
     let username = '';
-    let serverTimedOut = false;
 
-    const loadingOverlay = document.getElementById('loading-overlay');
-
-    socket.on('connect', () => {
-      if (!serverTimedOut) {
-        loadingOverlay.style.display = 'none';
-      }
-    });
-
-    socket.on('disconnect', () => {
-      loadingOverlay.style.display = 'flex';
-      loadingOverlay.textContent = 'Disconnected from server.';
-    });
-
-    socket.io.on('error', () => {
-      serverTimedOut = true;
-      loadingOverlay.textContent = 'Unable to connect. Server might be down.';
-    });
+    const messagesList = document.getElementById('messages');
 
     socket.on('not-authenticated', () => {
       window.location.href = '/login.html';
     });
 
     socket.on('chat history', (messages) => {
-      const messagesList = document.getElementById('chat-box');
       messagesList.innerHTML = '';
       messages.forEach((msg) => addMessage(msg));
       scrollToBottom();
@@ -180,6 +143,10 @@
       addMessage(msg);
       scrollToBottom();
     });
+
+    function scrollToBottom() {
+      messagesList.scrollTop = messagesList.scrollHeight;
+    }
 
     function addMessage(msg) {
       const item = document.createElement('li');
@@ -200,12 +167,7 @@
         item.appendChild(delBtn);
       }
 
-      document.getElementById('chat-box').appendChild(item);
-    }
-
-    function scrollToBottom() {
-      const chatBox = document.getElementById('chat-box');
-      chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+      messagesList.appendChild(item);
     }
 
     document.getElementById('form').addEventListener('submit', (e) => {

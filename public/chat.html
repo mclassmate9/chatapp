@@ -236,10 +236,11 @@
     
 
     function scrollToBottom() {
-      setTimeout(() => {
-      messagesList.scrollTop = messagesList.scrollHeight;
-    }, 100);
-    }
+  setTimeout(() => {
+    messagesList.scrollTop = messagesList.scrollHeight;
+  }, 100); // Small delay ensures DOM is updated first
+}
+
 
     function addMessage(msg) {
       const item = document.createElement('li');
@@ -260,7 +261,7 @@
         item.appendChild(delBtn);
       }
 
-      messagesList.appendChild(item);
+      messagesList.appendChild(item);scrollToBottom();
     }
 
     document.getElementById('form').addEventListener('submit', (e) => {

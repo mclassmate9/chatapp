@@ -50,32 +50,32 @@
     }
 
     form {
-  display: flex;
-  padding: 10px;
-  background: #ddd;
-  align-items: center;
-}
+      display: flex;
+      padding: 10px;
+      background: #ddd;
+      align-items: center;
+    }
 
-input[type="text"] {
-  flex: 1;
-  padding: 14px;
-  font-size: 16px;
-  border: none;
-  border-radius: 8px;
-  margin-right: 10px;
-  box-sizing: border-box;
-}
+    input[type="text"] {
+      flex: 1;
+      padding: 14px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      margin-right: 10px;
+      box-sizing: border-box;
+    }
 
-button {
-  padding: 14px 20px;
-  font-size: 16px;
-  border: none;
-  background: #007bff;
-  color: #fff;
-  border-radius: 8px;
-  cursor: pointer;
-  white-space: nowrap;
-}
+    button {
+      padding: 14px 20px;
+      font-size: 16px;
+      border: none;
+      background: #007bff;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
 
     #logoutBtn {
       position: absolute;
@@ -88,9 +88,26 @@ button {
       border-radius: 5px;
       cursor: pointer;
     }
+
+    #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+      z-index: 9999;
+    }
   </style>
 </head>
 <body>
+  <div id="loading-overlay">Connecting to server...</div>
+
   <div class="chat-container">
     <button id="logoutBtn">Logout</button>
     <ul id="chat-box"></ul>
@@ -102,8 +119,27 @@ button {
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io();
+    const socket = io({ timeout: 5000 });
     let username = '';
+    let serverTimedOut = false;
+
+    const loadingOverlay = document.getElementById('loading-overlay');
+
+    socket.on('connect', () => {
+      if (!serverTimedOut) {
+        loadingOverlay.style.display = 'none';
+      }
+    });
+
+    socket.on('disconnect', () => {
+      loadingOverlay.style.display = 'flex';
+      loadingOverlay.textContent = 'Disconnected from server.';
+    });
+
+    socket.io.on('error', () => {
+      serverTimedOut = true;
+      loadingOverlay.textContent = 'Unable to connect. Server might be down.';
+    });
 
     socket.on('not-authenticated', () => {
       window.location.href = '/login.html';
@@ -113,12 +149,12 @@ button {
       const messagesList = document.getElementById('chat-box');
       messagesList.innerHTML = '';
       messages.forEach((msg) => addMessage(msg));
-      scrollToBottom(); // scroll after history loaded
+      scrollToBottom();
     });
 
     socket.on('chat message', (msg) => {
       addMessage(msg);
-      scrollToBottom(); // scroll on new message
+      scrollToBottom();
     });
 
     function addMessage(msg) {

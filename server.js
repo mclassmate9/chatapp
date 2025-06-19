@@ -51,6 +51,35 @@ app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ✅ Register API Route
+const bcrypt = require('bcrypt');
+const User = require('./models/User'); // make sure this file exists
+
+app.post('/api/register', async (req, res) => {
+  const { userId, password, email } = req.body;
+
+  if (!userId || !password || !email) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  const existingUser = await User.findOne({ userId });
+  if (existingUser) {
+    return res.status(409).json({ message: 'User ID already taken.' });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const newUser = new User({
+    userId,
+    password: hashedPassword,
+    email
+  });
+
+  await newUser.save();
+
+  res.status(201).json({ message: 'User registered successfully.' });
+});
+
 // ✅ Routes
 app.post('/login', (req, res) => {
   const { username, password, remember } = req.body;

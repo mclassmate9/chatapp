@@ -103,6 +103,7 @@ io.on('connection', async (socket) => {
   socket.on('chat message', async (text) => {
     const newMsg = new Message({ user: username, text, status: 'sent' });
     await newMsg.save();
+    io.emit('chat message' , newMsg);
 
     // Send to sender as 'sent'
     socket.emit('chat message', { ...newMsg._doc, status: 'sent' });
@@ -121,9 +122,13 @@ io.on('connection', async (socket) => {
     }
   });
 
-  // ✅ Typing indicator
-  socket.on('typing', () => {
-    socket.broadcast.emit('typing', username);
+  socket.on('message delivered', async (msgId) => {
+    const msg = await Message.findById(msgId);
+    if (msg && msg.status === 'sent') {
+      msg.status = 'delivered';
+      await msg.save();
+      io.emit('message status update', msg);
+    }
   });
 
   // ✅ Message seen
@@ -134,6 +139,11 @@ io.on('connection', async (socket) => {
       await msg.save();
       io.emit('message status update', { msgId, status: 'seen' });
     }
+  });
+
+   // ✅ Typing indicator
+  socket.on('typing', () => {
+    socket.broadcast.emit('typing', username);
   });
 
   // ✅ Manual status update (for testing/expansion)

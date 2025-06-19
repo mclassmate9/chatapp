@@ -15,6 +15,28 @@
       flex-direction: column;
     }
 
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-family: Arial, sans-serif;
+      color: #333;
+      transition: opacity 0.4s ease;
+    }
+
+    #loadingOverlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
     .chat-container {
       flex: 1;
       display: flex;
@@ -29,29 +51,28 @@
       color: white;
       padding: 10px 15px;
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
       z-index: 1000;
     }
 
-.chat-header .center {
-       position: absolute;
-       left: 50%;
-       transform: translateX(-50%);
-       font-weight: bold;
-       font-size: 18px;
-}
+    .chat-header span {
+      flex: 1;
+      text-align: center;
+    }
 
     #chat-username {
       font-weight: bold;
+      font-size: 18px;
     }
 
     #user-status {
+      position: absolute;
+      left: 10px;
       font-size: 14px;
       padding: 5px 10px;
       border-radius: 20px;
       background-color: red;
-      margin-right: 10px;
     }
 
     .online {
@@ -59,9 +80,8 @@
     }
 
     #logoutBtn {
-      
-      bottom: 80px;
-      right: 15px;
+      position: absolute;
+      right: 10px;
       background: red;
       color: white;
       border: none;
@@ -185,12 +205,15 @@
   </style>
 </head>
 <body>
+  <div id="loadingOverlay">
+    <div class="loaderText">Connecting to server...</div>
+  </div>
+
   <div class="chat-container">
     <div class="chat-header">
-      
+      <span id="user-status" class="offline">Offline</span>
       <span id="chat-username">Chat</span>
-      <span class="center" id="user-status" class="offline">Offline</span>
-       <button id="logoutBtn">⎋</button>
+      <button id="logoutBtn">⎋</button>
     </div>
 
     <div id="typingIndicator"></div>
@@ -204,8 +227,6 @@
         <button class="sendBtn" aria-label="send message" type="submit">&#10148;</button>
       </div>
     </form>
-
-    
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -218,8 +239,17 @@
     const typingIndicator = document.getElementById('typingIndicator');
     const statusDot = document.getElementById('user-status');
     const newMessageBadge = document.getElementById('newMessageBadge');
+    const loadingOverlay = document.getElementById('loadingOverlay');
 
-    // Scroll to bottom logic
+    // Show/hide loader
+    socket.on('connect', () => {
+      loadingOverlay.classList.add('hidden');
+    });
+
+    socket.on('connect_error', () => {
+      loadingOverlay.classList.remove('hidden');
+    });
+
     function scrollToBottom(force = false) {
       const threshold = 100;
       const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < threshold;

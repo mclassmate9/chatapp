@@ -34,6 +34,14 @@
       z-index: 1000;
     }
 
+.chat-header .center {
+       position: absolute;
+       left: 50%;
+       transform: translateX(-50%);
+       font-weight: bold;
+       font-size: 18px;
+}
+
     #chat-username {
       font-weight: bold;
     }
@@ -43,6 +51,7 @@
       padding: 5px 10px;
       border-radius: 20px;
       background-color: red;
+      margin-right: 10px;
     }
 
     .online {
@@ -50,14 +59,14 @@
     }
 
     #logoutBtn {
-      position: fixed;
+      
       bottom: 80px;
       right: 15px;
       background: red;
       color: white;
       border: none;
       border-radius: 50%;
-      padding: 14px 18px;
+      padding: 6px 12px;
       font-size: 16px;
       cursor: pointer;
       z-index: 1001;
@@ -178,9 +187,10 @@
 <body>
   <div class="chat-container">
     <div class="chat-header">
-      <button id="logoutBtn">⎋</button>
+      
       <span id="chat-username">Chat</span>
-      <span id="user-status" class="offline">Offline</span>
+      <span class="center" id="user-status" class="offline">Offline</span>
+       <button id="logoutBtn">⎋</button>
     </div>
 
     <div id="typingIndicator"></div>

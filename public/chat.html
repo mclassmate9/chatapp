@@ -283,15 +283,16 @@
   });
 
   function scrollToBottom(force = false) {
-    const threshold = 100;
-    const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < threshold;
-    if (isAtBottom || force) {
-      messagesList.scrollTop = messagesList.scrollHeight;
-      newMessageBadge.style.display = 'none';
-    } else {
-      newMessageBadge.style.display = 'block';
-    }
+  const scrollThreshold = 150; // px from bottom
+  const distanceFromBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight;
+
+  if (force || distanceFromBottom < scrollThreshold) {
+    messagesList.scrollTop = messagesList.scrollHeight;
+    newMessageBadge.style.display = 'none';
+  } else {
+    newMessageBadge.style.display = 'block';
   }
+}
 
   newMessageBadge.addEventListener('click', () => scrollToBottom(true));
 

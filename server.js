@@ -11,7 +11,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
-// ✅ MongoDB Connection with error handling
+// ✅ MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -27,9 +27,7 @@ const sessionMiddleware = session({
   secret: 'chatSecretKey',
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI
-  }),
+  store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
   cookie: { maxAge: null }
 });
 
@@ -38,10 +36,11 @@ const messageSchema = new mongoose.Schema({
   user: String,
   text: String,
   time: { type: Date, default: Date.now },
+  status: { type: String, enum: ['sent', 'delivered', 'seen'], default: 'sent' }
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// ✅ Static users (can be replaced with real DB later)
+// ✅ Static users
 const users = {
   you: 'pass123',
   friend: 'secret456',
@@ -58,11 +57,7 @@ app.post('/login', (req, res) => {
 
   if (users[username] && users[username] === password) {
     req.session.username = username;
-    if (remember) {
-      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30; // 30 days
-    } else {
-      req.session.cookie.expires = false;
-    }
+    req.session.cookie.maxAge = remember ? 1000 * 60 * 60 * 24 * 30 : null;
     return res.redirect('/chat.html');
   }
 
@@ -80,18 +75,16 @@ app.get('/api/user', (req, res) => {
   res.json({ username: req.session.username });
 });
 
-// ✅ Apply session to sockets
+// ✅ Apply session to socket
 io.use((socket, next) => {
   sessionMiddleware(socket.request, {}, next);
 });
 
-// ✅ Track online users
+// ✅ Online user tracking
 const onlineUsers = new Set();
 
-// ✅ Socket Events
 io.on('connection', async (socket) => {
   const session = socket.request.session;
-
   if (!session.username) {
     socket.emit('not-authenticated');
     return socket.disconnect();
@@ -100,21 +93,25 @@ io.on('connection', async (socket) => {
   const username = session.username;
   console.log(`${username} connected`);
   onlineUsers.add(username);
-
   socket.broadcast.emit('user-online', username);
 
   // Send chat history
   const messages = await Message.find().sort({ time: 1 });
   socket.emit('chat history', messages);
 
-  // Handle new messages
+  // ✅ New message
   socket.on('chat message', async (text) => {
-    const newMsg = new Message({ user: username, text });
+    const newMsg = new Message({ user: username, text, status: 'sent' });
     await newMsg.save();
-    io.emit('chat message', newMsg);
+
+    // Send to sender as 'sent'
+    socket.emit('chat message', { ...newMsg._doc, status: 'sent' });
+
+    // Send to other user(s) as 'delivered'
+    socket.broadcast.emit('chat message', { ...newMsg._doc, status: 'delivered' });
   });
 
-  // Handle delete message
+  // ✅ Message deleted
   socket.on('delete message', async (msgId) => {
     const msg = await Message.findById(msgId);
     if (msg && msg.user === username) {
@@ -124,12 +121,29 @@ io.on('connection', async (socket) => {
     }
   });
 
-  // Typing indicator
+  // ✅ Typing indicator
   socket.on('typing', () => {
     socket.broadcast.emit('typing', username);
   });
 
-  // Disconnect event
+  // ✅ Message seen
+  socket.on('message seen', async (msgId) => {
+    const msg = await Message.findById(msgId);
+    if (msg && msg.status !== 'seen') {
+      msg.status = 'seen';
+      await msg.save();
+      io.emit('message status update', { msgId, status: 'seen' });
+    }
+  });
+
+  // ✅ Manual status update (for testing/expansion)
+  socket.on('update status', async ({ msgId, status }) => {
+    if (['sent', 'delivered', 'seen'].includes(status)) {
+      await Message.findByIdAndUpdate(msgId, { status });
+      io.emit('message status update', { msgId, status });
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log(`${username} disconnected`);
     onlineUsers.delete(username);
@@ -137,13 +151,13 @@ io.on('connection', async (socket) => {
   });
 });
 
-// ✅ Global Error Handler (last middleware)
+// ✅ Error handler
 app.use((err, req, res, next) => {
   console.error("Server Error:", err.stack);
   res.status(500).send("Internal Server Error");
 });
 
-// ✅ Start Server
+// ✅ Server start
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

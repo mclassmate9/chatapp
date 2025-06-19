@@ -104,12 +104,6 @@ io.on('connection', async (socket) => {
     const newMsg = new Message({ user: username, text, status: 'sent' });
     await newMsg.save();
     io.emit('chat message' , newMsg);
-
-    // Send to sender as 'sent'
-    socket.emit('chat message', { ...newMsg._doc, status: 'sent' });
-
-    // Send to other user(s) as 'delivered'
-    socket.broadcast.emit('chat message', { ...newMsg._doc, status: 'delivered' });
   });
 
   // ✅ Message deleted

@@ -354,22 +354,21 @@
     scrollToBottom(true);
   });
 
-  socket.on('chat message', (msg) => {
-    addMessage(msg);
-
-    // Mark delivered
-    if (msg.user !== username) {
-      socket.emit('message delivered', msg._id);
-    }
-
-    // Mark seen if user is at bottom
-    const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100;
-    if (msg.user !== username && isAtBottom) {
+  
+socket.on('chat message', (msg) => {
+  addMessage(msg);
+  
+  // Handle delivery/seen
+  if (msg.user !== username) {
+    socket.emit('message delivered', msg._id);
+    const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 150;
+    if (isAtBottom) {
       socket.emit('message seen', msg._id);
     }
+  }
 
-    scrollToBottom();
-  });
+  scrollToBottom(); // ✅ only scroll if near bottom
+});
 
   socket.on('typing', (user) => {
     if (user !== username) {

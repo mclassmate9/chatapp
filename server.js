@@ -166,7 +166,9 @@ io.on('connection', async (socket) => {
   socket.broadcast.emit('user-online', username);
 
   // Send chat history
-  const messages = await Message.find().sort({ time: 1 });
+  const messages = await Message.find({
+  $or: [{ user: username }, { to: username }]
+}).sort({ time: 1 });
   socket.emit('chat history', messages);
 
   // ✅ New message

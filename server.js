@@ -9,6 +9,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const protectRoutes = require('./routes/protect');
+const contactRoutes = require('./routes/contacts');
 
 const app = express();
 const server = http.createServer(app);
@@ -68,6 +69,7 @@ app.get('/', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
 app.use('/protect', protectRoutes);
+app.use('/contacts', contactRoutes);
 
 // ✅ Register API Route
 const bcrypt = require('bcrypt');

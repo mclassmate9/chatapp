@@ -160,21 +160,26 @@ socket.on('chat message', (msg) => {
       fetch('/logout').then(() => (window.location.href = '/login.html'));
     }
   });
+fetch('/api/user')
+  .then(res => {
+    if (!res.ok) throw new Error('Not authenticated');
+    return res.json();
+  })
+  .then(data => {
+    username = data.username;
+    document.getElementById('chat-username').textContent = `Chat with ${username}`;
+    statusDot.classList.replace('offline', 'online');
+    statusDot.textContent = 'Online';
 
-  fetch('/api/user')
-    .then(res => res.json())
-    .then(data => {
-      username = data.username;
-      document.getElementById('chat-username').textContent = `Chat with ${username}`;
-      statusDot.classList.remove('offline');
-      statusDot.classList.add('online');
-      statusDot.textContent = 'Online';
-    })
-    .catch(() => {
-      statusDot.classList.remove('online');
-      statusDot.classList.add('offline');
-      statusDot.textContent = 'Offline';
-    });
+    // Now that user is authenticated, connect with Socket.io
+    socket.connect();  // if you're preventing auto-connect
+    loadingOverlay.classList.add('hidden');
+  })
+  .catch(err => {
+    console.error('Auth-check failed:', err);
+    window.location.href = '/login.html';
+  });
+  
 
 // Fetch approved contacts
 fetch('/user/approved')

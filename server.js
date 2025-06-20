@@ -79,17 +79,19 @@ const User = require('./models/User'); // make sure this file exists
 app.post('/api/register', async (req, res) => {
   const { userId, password, email } = req.body;
 
-console.log("Trying to log in with:", userID);
-  
+  console.log("Trying to register with:", userId); // ✅ FIXED
+
   if (!userId || !password || !email) {
     return res.status(400).json({ message: 'All fields are required.' });
   }
 
-  // ✅ Check for existing userId or email
-const existingUser = await User.findOne({ $or: [{ userId }, { email }] });
-if (existingUser) {
-  return res.status(400).json({ message: 'User ID or Email already registered.' });
-}
+  const existingUser = await User.findOne({ $or: [{ userId }, { email }] });
+  if (existingUser) {
+    return res.status(409).json({ message: 'User ID or Email already exists.' });
+  }
+
+  // continue with registration...
+});
 
   const hashedPassword = await bcrypt.hash(password, 10);
 

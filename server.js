@@ -168,11 +168,27 @@ io.on('connection', async (socket) => {
   socket.emit('chat history', messages);
 
   // ✅ New message
-  socket.on('chat message', async (text) => {
-    const newMsg = new Message({ user: username, text, status: 'sent' });
-    await newMsg.save();
-    io.emit('chat message' , newMsg);
-  });
+  socket.on('chat message', async ({ to, text }) => {
+  if (!to || !text) return;
+
+  const sender = await User.findOne({ userId: username });
+  const contact = sender.contacts.find(c => c.userId === to && c.status === 'approved');
+
+  if (!contact) {
+    return socket.emit('error', 'Cannot send message. Contact not approved.');
+  }
+
+  const newMsg = new Message({ user: username, text, status: 'sent' });
+  await newMsg.save();
+
+  // Emit message only to sender and recipient
+  for (let [id, sock] of io.sockets.sockets) {
+    const session = sock.request.session;
+    if (session?.username === username || session?.username === to) {
+      sock.emit('chat message', newMsg);
+    }
+  }
+});
 
   // ✅ Message deleted
   socket.on('delete message', async (msgId) => {

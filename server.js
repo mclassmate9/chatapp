@@ -49,13 +49,12 @@ app.use(sessionMiddleware);
 
 
 // ✅ Protect chat.html
-app.get('/chat.html', (req, res) => {
-  if (!req.session.username) {
-    return res.redirect('/login.html');
-  }
+app.use(
+  '/protected',
+  require('./routes/protect'),
+  express.static(path.join(__dirname, 'public', 'protected'))
+);
 
-  res.sendFile(path.join(__dirname, 'protected', 'chat.html'));
-});
 
 app.use(express.static(path.join(__dirname, 'public')));
 

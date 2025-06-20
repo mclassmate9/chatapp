@@ -46,8 +46,6 @@ const Message = mongoose.model('Message', messageSchema);
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
 
-const path = require('path');
-
 // ✅ Protect chat.html
 app.get('/chat.html', (req, res) => {
   if (!req.session.username) {

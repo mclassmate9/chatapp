@@ -8,6 +8,7 @@ const MongoStore = require('connect-mongo');
 require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+const contactRoutes = require('./routes/contacts');
 
 const app = express();
 const server = http.createServer(app);
@@ -46,6 +47,7 @@ const Message = mongoose.model('Message', messageSchema);
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
 
+
 // ✅ Protect chat.html
 app.get('/chat.html', (req, res) => {
   if (!req.session.username) {
@@ -66,7 +68,7 @@ app.get('/', (req, res) => {
 
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
-
+app.use('/contacts', contactRoutes);
 
 // ✅ Register API Route
 const bcrypt = require('bcrypt');

@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo');
 require('dotenv').config();
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
 
 const app = express();
 const server = http.createServer(app);
@@ -47,6 +48,7 @@ const Message = mongoose.model('Message', messageSchema);
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(authRoutes);
 app.use(authRoutes);
 
 

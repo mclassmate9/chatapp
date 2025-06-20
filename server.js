@@ -42,14 +42,24 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-
-
 // ✅ Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(authRoutes);
-app.use(authRoutes);
+
+// ✅ Redirect root path to login page
+app.get('/', (req, res) => {
+  res.redirect('/login.html');
+});
+
+// ✅ Route setup
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
+
+app.use('/auth', authRoutes);
+app.use('/user', userRoutes);
+
+
 
 
 // ✅ Register API Route

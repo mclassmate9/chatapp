@@ -57,6 +57,12 @@ const addContactBtn = document.getElementById('addContactBtn');
   });
 
   function addMessage(msg) {
+
+    function addMessage(msg) {
+  if ((msg.user !== username && msg.user !== selectedContact) ||
+      (msg.user === username && msg.to !== selectedContact)) {
+    return; // skip unrelated messages
+  }
     const item = document.createElement('li');
     const isSelf = msg.user === username;
     item.classList.add(isSelf ? 'message-sent' : 'message-received');

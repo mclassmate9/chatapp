@@ -3,35 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - ChatApp</title>
-  
+  <title>Login</title>
+  <link rel="stylesheet" href="/styles/auth.css" />
 </head>
 <body>
-  <form class="login-container" method="POST" action="/login">
+  <div class="auth-container">
     <h2>Login</h2>
-    <input type="text" name="username" placeholder="Username" required />
-    <input id="password" type="password" name="password" placeholder="Password" required />
-
-    <div class="options">
+    <form action="/login" method="POST" id="loginForm">
+      <input type="text" name="userId" placeholder="User ID" required />
+      <input type="password" name="password" placeholder="Password" required />
       <label>
-        <input type="checkbox" onclick="togglePassword()" />
-        Show Password
+        <input type="checkbox" name="remember" /> Remember me
       </label>
-      <label>
-        <input type="checkbox" name="remember" />
-        Remember Me
-      </label>
-    </div>
-
-    <button type="submit">Sign In</button>
-    <small>Only "you" and "friend" are valid users.</small>
-  </form>
-
-  <script>
-    function togglePassword() {
-      const pwd = document.getElementById("password");
-      pwd.type = pwd.type === "password" ? "text" : "password";
-    }
-  </script>
+      <button type="submit">Login</button>
+      <p>Don’t have an account? <a href="/register.html">Register</a></p>
+    </form>
+  </div>
 </body>
 </html>

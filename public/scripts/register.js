@@ -1,49 +1,37 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('registerForm');
+document.getElementById('registerForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
 
-  // Create feedback message element
-  const message = document.createElement('div');
-  message.style.marginTop = '10px';
-  message.style.fontSize = '14px';
-  message.style.color = 'red';
-  form.appendChild(message);
+  const userId = document.getElementById('userId').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const message = document.getElementById('message');
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  // ✅ Email validation using regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    message.style.color = 'red';
+    message.textContent = 'Please enter a valid email address.';
+    return;
+  }
 
-    message.style.color = 'black';
-    message.textContent = 'Registering...';
+  // ✅ Submit data
+  try {
+    const res = await fetch('/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ userId, password, email }),
+    });
 
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-
-    // Client-side check
-    if (!data.userId || !data.email || !data.password) {
+    if (res.redirected) {
+      window.location.href = res.url;
+    } else {
+      const text = await res.text();
       message.style.color = 'red';
-      message.textContent = 'Please fill in all fields.';
-      return;
+      message.textContent = text;
     }
-
-    try {
-      const response = await fetch('/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
-
-      if (response.redirected) {
-        window.location.href = response.url;
-      } else {
-        const text = await response.text();
-        message.style.color = 'red';
-        message.textContent = text || 'Registration failed.';
-      }
-    } catch (err) {
-      console.error('Register error:', err);
-      message.style.color = 'red';
-      message.textContent = 'An error occurred. Please try again.';
-    }
-  });
+  } catch (err) {
+    message.style.color = 'red';
+    message.textContent = 'Registration failed. Please try again.';
+    console.error(err);
+  }
 });

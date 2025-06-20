@@ -15,14 +15,17 @@ const addContactBtn = document.getElementById('addContactBtn');
 
 
   socket.on('connect', () => {
+    console.log('✅ Socket connected');
     loadingOverlay.classList.add('hidden');
   });
 
   socket.on('connect_error', () => {
+    console.error('❌ Socket connect error:', err.message);
     loadingOverlay.classList.remove('hidden');
   });
 
   socket.on('disconnect', () => {
+    console.warn('⚠️ Socket disconnected');
     loadingOverlay.classList.remove('hidden');
   });
 

@@ -3,6 +3,15 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 
+// routes/protect.js
+module.exports = (req, res, next) => {
+  if (!req.session.username) {
+    return res.redirect('/login.html');
+  }
+  next();
+};
+
+
 // Add a new contact
 router.post('/api/contacts/add', async (req, res) => {
   const { contactId } = req.body;

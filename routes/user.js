@@ -36,4 +36,22 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Get approved contacts for the logged-in user
+router.get('/approved', async (req, res) => {
+  if (!req.session.username) return res.status(401).json({ message: 'Not logged in' });
+
+  try {
+    const user = await User.findOne({ userId: req.session.username });
+
+    const approved = user.contacts
+      .filter(c => c.status === 'approved')
+      .map(c => c.userId);
+
+    res.json(approved);
+  } catch (err) {
+    console.error('Error fetching approved contacts:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

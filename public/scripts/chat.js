@@ -131,14 +131,25 @@ socket.on('chat message', (msg) => {
   });
 
   document.getElementById('form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const input = document.getElementById('input');
-    if (input.value.trim()) {
-      socket.emit('chat message', input.value.trim());
-      input.value = '';
-      socket.emit('typing', false);
-    }
-  });
+  e.preventDefault();
+  const input = document.getElementById('input');
+  const messageText = input.value.trim();
+
+  if (!selectedContact) {
+    alert('Please select a contact to chat with.');
+    return;
+  }
+
+  if (messageText) {
+    socket.emit('chat message', {
+      to: selectedContact,
+      text: messageText
+    });
+
+    input.value = '';
+    socket.emit('typing', false);
+  }
+});
 
   document.getElementById('input').addEventListener('input', () => {
     socket.emit('typing', true);

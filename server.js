@@ -40,11 +40,7 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// ✅ Static users
-const users = {
-  you: 'pass123',
-  friend: 'secret456',
-};
+
 
 // ✅ Middleware
 app.use(express.urlencoded({ extended: true }));

@@ -91,7 +91,6 @@ app.post('/api/register', async (req, res) => {
   }
 
   // continue with registration...
-});
 
   const hashedPassword = await bcrypt.hash(password, 10);
 

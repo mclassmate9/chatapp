@@ -2,38 +2,73 @@ const socket = io({
   autoConnect: false,
   withCredentials: true
 });
-  let username = '';
-  let typingTimeout;
-  let selectedContact = null;
 
-  const messagesList = document.getElementById('messages');
-  const typingIndicator = document.getElementById('typingIndicator');
-  const statusDot = document.getElementById('user-status');
-  const newMessageBadge = document.getElementById('newMessageBadge');
-  const loadingOverlay = document.getElementById('loadingOverlay');
+let username = '';
+let typingTimeout;
+let selectedContact = null;
 
+const messagesList = document.getElementById('messages');
+const typingIndicator = document.getElementById('typingIndicator');
+const statusDot = document.getElementById('user-status');
+const newMessageBadge = document.getElementById('newMessageBadge');
+const loadingOverlay = document.getElementById('loadingOverlay');
 const contactList = document.getElementById('contactList');
 const newContactId = document.getElementById('newContactId');
 const addContactBtn = document.getElementById('addContactBtn');
 
+// ✅ Socket events
+socket.on('connect', () => {
+  console.log('✅ Socket connected');
+  loadingOverlay.classList.add('hidden');
+});
 
-  socket.on('connect', () => {
-    console.log('✅ Socket connected');
-    loadingOverlay.classList.add('hidden');
-  });
+socket.on('connect_error', (err) => {
+  console.error('❌ Socket connect error:', err.message);
+  loadingOverlay.classList.remove('hidden');
+});
 
-  socket.on('connect_error', () => {
-    console.error('❌ Socket connect error:', err.message);
-    loadingOverlay.classList.remove('hidden');
-  });
+socket.on('disconnect', () => {
+  console.warn('⚠️ Socket disconnected');
+  loadingOverlay.classList.remove('hidden');
+});
 
-  socket.on('disconnect', () => {
-    console.warn('⚠️ Socket disconnected');
-    loadingOverlay.classList.remove('hidden');
-  });
+socket.on('not-authenticated', () => {
+  window.location.href = '/login.html';
+});
 
-  function scrollToBottom(force = false) {
-  const scrollThreshold = 150; // px from bottom
+socket.on('chat history', (messages) => {
+  messagesList.innerHTML = '';
+  messages.forEach(addMessage);
+  scrollToBottom(true);
+});
+
+socket.on('chat message', (msg) => {
+  addMessage(msg);
+
+  if (msg.user !== username) {
+    socket.emit('message delivered', msg._id);
+    const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 150;
+    if (isAtBottom) {
+      socket.emit('message seen', msg._id);
+    }
+  }
+
+  scrollToBottom();
+});
+
+socket.on('typing', (user) => {
+  if (user !== username) {
+    typingIndicator.textContent = `${user} is typing...`;
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+      typingIndicator.textContent = '';
+    }, 2000);
+  }
+});
+
+// ✅ Message handling
+function scrollToBottom(force = false) {
+  const scrollThreshold = 150;
   const distanceFromBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight;
 
   if (force || distanceFromBottom < scrollThreshold) {
@@ -44,99 +79,62 @@ const addContactBtn = document.getElementById('addContactBtn');
   }
 }
 
-  newMessageBadge.addEventListener('click', () => scrollToBottom(true));
-
-  messagesList.addEventListener('scroll', () => {
-    const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100;
-    if (isAtBottom) newMessageBadge.style.display = 'none';
-
-    // Check visibility to emit "seen"
-    const messageItems = messagesList.querySelectorAll('li');
-    messageItems.forEach(item => {
-      const rect = item.getBoundingClientRect();
-      const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-
-      if (visible && item.dataset.id && item.dataset.sender !== username) {
-        socket.emit('message seen', item.dataset.id);
-      }
-    });
-  });
-
-  function addMessage(msg) {
-
-    function addMessage(msg) {
+function addMessage(msg) {
   if ((msg.user !== username && msg.user !== selectedContact) ||
       (msg.user === username && msg.to !== selectedContact)) {
-    return; // skip unrelated messages
-  }
-    const item = document.createElement('li');
-    const isSelf = msg.user === username;
-    item.classList.add(isSelf ? 'message-sent' : 'message-received');
-    item.textContent = isSelf ? msg.text : `${msg.user}: ${msg.text}`;
-    item.dataset.id = msg._id;
-    item.dataset.sender = msg.user;
-
-    // Add status badge
-    if (isSelf && msg.status) {
-      const statusSpan = document.createElement('span');
-      statusSpan.className = 'status-badge';
-      statusSpan.textContent =
-        msg.status === 'sent' ? '✓' :
-        msg.status === 'delivered' ? '✓✓' :
-        msg.status === 'seen' ? '✓✓ Seen' : '';
-      item.appendChild(statusSpan);
-    }
-
-    // Add delete button
-    if (isSelf) {
-      const delBtn = document.createElement('button');
-      delBtn.textContent = '🗑️';
-      delBtn.style.marginLeft = '10px';
-      delBtn.style.background = 'transparent';
-      delBtn.style.border = 'none';
-      delBtn.style.cursor = 'pointer';
-      delBtn.onclick = () => socket.emit('delete message', msg._id);
-      item.appendChild(delBtn);
-    }
-
-    messagesList.appendChild(item);
+    return;
   }
 
-  socket.on('not-authenticated', () => window.location.href = '/login.html');
+  const item = document.createElement('li');
+  const isSelf = msg.user === username;
+  item.classList.add(isSelf ? 'message-sent' : 'message-received');
+  item.textContent = isSelf ? msg.text : `${msg.user}: ${msg.text}`;
+  item.dataset.id = msg._id;
+  item.dataset.sender = msg.user;
 
-  socket.on('chat history', (messages) => {
-    messagesList.innerHTML = '';
-    messages.forEach(addMessage);
-    scrollToBottom(true);
+  if (isSelf && msg.status) {
+    const statusSpan = document.createElement('span');
+    statusSpan.className = 'status-badge';
+    statusSpan.textContent =
+      msg.status === 'sent' ? '✓' :
+      msg.status === 'delivered' ? '✓✓' :
+      msg.status === 'seen' ? '✓✓ Seen' : '';
+    item.appendChild(statusSpan);
+  }
+
+  if (isSelf) {
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑️';
+    delBtn.style.marginLeft = '10px';
+    delBtn.style.background = 'transparent';
+    delBtn.style.border = 'none';
+    delBtn.style.cursor = 'pointer';
+    delBtn.onclick = () => socket.emit('delete message', msg._id);
+    item.appendChild(delBtn);
+  }
+
+  messagesList.appendChild(item);
+}
+
+newMessageBadge.addEventListener('click', () => scrollToBottom(true));
+
+messagesList.addEventListener('scroll', () => {
+  const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100;
+  if (isAtBottom) newMessageBadge.style.display = 'none';
+
+  const messageItems = messagesList.querySelectorAll('li');
+  messageItems.forEach(item => {
+    const rect = item.getBoundingClientRect();
+    const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+
+    if (visible && item.dataset.id && item.dataset.sender !== username) {
+      socket.emit('message seen', item.dataset.id);
+    }
   });
-
-  
-socket.on('chat message', (msg) => {
-  addMessage(msg);
-  
-  // Handle delivery/seen
-  if (msg.user !== username) {
-    socket.emit('message delivered', msg._id);
-    const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 150;
-    if (isAtBottom) {
-      socket.emit('message seen', msg._id);
-    }
-  }
-
-  scrollToBottom(); // ✅ only scroll if near bottom
 });
 
-  socket.on('typing', (user) => {
-    if (user !== username) {
-      typingIndicator.textContent = `${user} is typing...`;
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => {
-        typingIndicator.textContent = '';
-      }, 2000);
-    }
-  });
-
-  document.getElementById('form').addEventListener('submit', (e) => {
+// ✅ Form & input events
+document.getElementById('form').addEventListener('submit', (e) => {
   e.preventDefault();
   const input = document.getElementById('input');
   const messageText = input.value.trim();
@@ -157,17 +155,17 @@ socket.on('chat message', (msg) => {
   }
 });
 
-  document.getElementById('input').addEventListener('input', () => {
-    socket.emit('typing', true);
-  });
+document.getElementById('input').addEventListener('input', () => {
+  socket.emit('typing', true);
+});
 
-  document.getElementById('logoutBtn').addEventListener('click', () => {
-    if (confirm('Are you sure you want to logout?')) {
-      fetch('/logout').then(() => (window.location.href = '/login.html'));
-    }
-  });
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  if (confirm('Are you sure you want to logout?')) {
+    fetch('/logout').then(() => (window.location.href = '/login.html'));
+  }
+});
 
-    console.log("Checking user session...");
+// ✅ Session check + Socket connect
 fetch('/api/user')
   .then(res => {
     if (!res.ok) throw new Error('Not authenticated');
@@ -178,18 +176,15 @@ fetch('/api/user')
     document.getElementById('chat-username').textContent = `Chat with ${username}`;
     statusDot.classList.replace('offline', 'online');
     statusDot.textContent = 'Online';
-
-    // Now that user is authenticated, connect with Socket.io
-    socket.connect();  // if you're preventing auto-connect
+    socket.connect();
     loadingOverlay.classList.add('hidden');
   })
   .catch(err => {
     console.error('Auth-check failed:', err);
     window.location.href = '/login.html';
   });
-  
 
-// Fetch approved contacts
+// ✅ Load approved contacts for chat
 fetch('/user/approved')
   .then(res => res.json())
   .then(contacts => {
@@ -204,11 +199,11 @@ fetch('/user/approved')
     selector.addEventListener('change', () => {
       selectedContact = selector.value;
       document.getElementById('chat-username').textContent = `Chat with ${selectedContact}`;
-      refreshChat(); // Filter messages
+      refreshChat(); // 🔄 Optional: if implemented
     });
   });
 
-// Load contacts
+// ✅ Load contact list
 fetch('/api/contacts')
   .then(res => res.json())
   .then(contacts => {
@@ -216,14 +211,13 @@ fetch('/api/contacts')
       const li = document.createElement('li');
       li.textContent = contact;
       li.addEventListener('click', () => {
-        // Placeholder: later we load that user's chat
         alert(`Open chat with ${contact}`);
       });
       contactList.appendChild(li);
     });
   });
 
-// Add contact
+// ✅ Add contact
 addContactBtn.addEventListener('click', () => {
   const contactId = newContactId.value.trim();
   if (!contactId) return;

@@ -20,7 +20,7 @@ router.post('/register', async (req, res) => {
     await newUser.save();
 
     req.session.username = userId;
-    res.redirect('/chat.html');
+    res.redirect('/protected/chat.html');
   } catch (err) {
     console.error('Registration Error:', err);
     res.status(500).send('Server error');

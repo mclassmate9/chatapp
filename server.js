@@ -6,6 +6,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo');
 require('dotenv').config();
+const authRoutes = require('./routes/auth');
 
 const app = express();
 const server = http.createServer(app);
@@ -46,6 +47,8 @@ const Message = mongoose.model('Message', messageSchema);
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(authRoutes);
+
 
 // ✅ Register API Route
 const bcrypt = require('bcrypt');

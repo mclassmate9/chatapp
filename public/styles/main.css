@@ -223,3 +223,41 @@
       box-shadow: 0 0 5px #007bff;
       transition: box-shadow 0.3s ease-in-out;
     }
+
+.chat-layout {
+  display: flex;
+  height: 100vh;
+}
+
+#contactSidebar {
+  width: 220px;
+  background: #fff;
+  border-right: 1px solid #ccc;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+#contactSidebar h3 {
+  margin-top: 0;
+}
+
+#contactList {
+  list-style: none;
+  padding: 0;
+}
+
+#contactList li {
+  padding: 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+#contactList li:hover {
+  background: #f0f0f0;
+}
+
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}

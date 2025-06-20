@@ -122,7 +122,7 @@ app.post('/login', async (req, res) => {
     // Set session
     req.session.username = user.userId;
     req.session.cookie.maxAge = remember ? 1000 * 60 * 60 * 24 * 30 : null;
-    return res.redirect('/chat.html');
+    return res.redirect('/protected/chat.html');
 
   } catch (err) {
     console.error("Login error:", err);

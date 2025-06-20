@@ -76,6 +76,8 @@ const User = require('./models/User'); // make sure this file exists
 app.post('/api/register', async (req, res) => {
   const { userId, password, email } = req.body;
 
+console.log("Trying to log in with:", username);
+  
   if (!userId || !password || !email) {
     return res.status(400).json({ message: 'All fields are required.' });
   }

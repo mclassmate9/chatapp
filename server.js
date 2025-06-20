@@ -80,10 +80,11 @@ app.post('/api/register', async (req, res) => {
     return res.status(400).json({ message: 'All fields are required.' });
   }
 
-  const existingUser = await User.findOne({ userId });
-  if (existingUser) {
-    return res.status(409).json({ message: 'User ID already taken.' });
-  }
+  // ✅ Check for existing userId or email
+const existingUser = await User.findOne({ $or: [{ userId }, { email }] });
+if (existingUser) {
+  return res.status(400).json({ message: 'User ID or Email already registered.' });
+}
 
   const hashedPassword = await bcrypt.hash(password, 10);
 

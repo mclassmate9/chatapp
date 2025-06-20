@@ -49,7 +49,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ✅ Redirect root path to login page
 app.get('/', (req, res) => {
-  res.redirect('/login.html');
+  res.redirect('/register.html');
 });
 
 // ✅ Route setup

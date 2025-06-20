@@ -77,16 +77,32 @@ app.post('/api/register', async (req, res) => {
 });
 
 // ✅ Routes
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
   const { username, password, remember } = req.body;
 
-  if (users[username] && users[username] === password) {
-    req.session.username = username;
+  try {
+    // Look up user in the database
+    const user = await User.findOne({ userId: username });
+
+    if (!user) {
+      return res.send('<h3>User not found. <a href="/login.html">Try again</a></h3>');
+    }
+
+    // Check password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.send('<h3>Incorrect password. <a href="/login.html">Try again</a></h3>');
+    }
+
+    // Set session
+    req.session.username = user.userId;
     req.session.cookie.maxAge = remember ? 1000 * 60 * 60 * 24 * 30 : null;
     return res.redirect('/chat.html');
-  }
 
-  return res.send('<h3>Login failed. <a href="/login.html">Try again</a></h3>');
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).send('<h3>Server error. <a href="/login.html">Try again</a></h3>');
+  }
 });
 
 app.get('/logout', (req, res) => {

@@ -38,6 +38,7 @@ const sessionMiddleware = session({
 // ✅ Message Schema
 const messageSchema = new mongoose.Schema({
   user: String,
+  to: String,
   text: String,
   time: { type: Date, default: Date.now, expires:345600 },//4days in seconds to auto delete messages
   status: { type: String, enum: ['sent', 'delivered', 'seen'], default: 'sent' }

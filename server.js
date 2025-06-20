@@ -53,13 +53,9 @@ app.get('/', (req, res) => {
 });
 
 // ✅ Route setup
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/user');
 
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
-
-
 
 
 // ✅ Register API Route

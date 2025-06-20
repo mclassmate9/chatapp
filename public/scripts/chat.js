@@ -8,6 +8,11 @@ const socket = io();
   const newMessageBadge = document.getElementById('newMessageBadge');
   const loadingOverlay = document.getElementById('loadingOverlay');
 
+const contactList = document.getElementById('contactList');
+const newContactId = document.getElementById('newContactId');
+const addContactBtn = document.getElementById('addContactBtn');
+
+
   socket.on('connect', () => {
     loadingOverlay.classList.add('hidden');
   });
@@ -152,3 +157,41 @@ socket.on('chat message', (msg) => {
       statusDot.classList.add('offline');
       statusDot.textContent = 'Offline';
     });
+
+// Load contacts
+fetch('/api/contacts')
+  .then(res => res.json())
+  .then(contacts => {
+    contacts.forEach(contact => {
+      const li = document.createElement('li');
+      li.textContent = contact;
+      li.addEventListener('click', () => {
+        // Placeholder: later we load that user's chat
+        alert(`Open chat with ${contact}`);
+      });
+      contactList.appendChild(li);
+    });
+  });
+
+// Add contact
+addContactBtn.addEventListener('click', () => {
+  const contactId = newContactId.value.trim();
+  if (!contactId) return;
+
+  fetch('/api/contacts/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ contactId })
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Failed to add contact');
+      const li = document.createElement('li');
+      li.textContent = contactId;
+      li.addEventListener('click', () => {
+        alert(`Open chat with ${contactId}`);
+      });
+      contactList.appendChild(li);
+      newContactId.value = '';
+    })
+    .catch(err => alert(err.message));
+});

@@ -179,7 +179,7 @@ io.on('connection', async (socket) => {
     return socket.emit('error', 'Cannot send message. Contact not approved.');
   }
 
-  const newMsg = new Message({ user: username, text, status: 'sent' });
+  const newMsg = new Message({ user: username, to, text, status: 'sent' });
   await newMsg.save();
 
   // Emit message only to sender and recipient

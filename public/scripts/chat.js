@@ -161,6 +161,7 @@ socket.on('chat message', (msg) => {
     }
   });
 fetch('/api/user')
+  console.log("Checking user session...");
   .then(res => {
     if (!res.ok) throw new Error('Not authenticated');
     return res.json();

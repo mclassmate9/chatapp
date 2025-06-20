@@ -1,4 +1,4 @@
-const socket = io();
+const socket = io({ autoConnect: false});
   let username = '';
   let typingTimeout;
   let selectedContact = null;

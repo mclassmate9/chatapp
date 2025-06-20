@@ -8,7 +8,7 @@ const MongoStore = require('connect-mongo');
 require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
-const contactRoutes = require('./routes/contacts');
+const protectRoutes = require('./routes/protect');
 
 const app = express();
 const server = http.createServer(app);
@@ -68,7 +68,7 @@ app.get('/', (req, res) => {
 
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
-app.use('/contacts', contactRoutes);
+app.use('/protect', protectRoutes);
 
 // ✅ Register API Route
 const bcrypt = require('bcrypt');

@@ -1,34 +1,49 @@
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('registerForm');
 
-  const userId = document.getElementById('userId').value.trim();
-  const password = document.getElementById('password').value;
-  const email = document.getElementById('email').value.trim();
+  // Create feedback message element
+  const message = document.createElement('div');
+  message.style.marginTop = '10px';
+  message.style.fontSize = '14px';
+  message.style.color = 'red';
+  form.appendChild(message);
 
-  if (!userId || !password || !email) {
-    alert("All fields are required.");
-    return;
-  }
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  try {
-    const res = await fetch('/api/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ userId, password, email })
-    });
+    message.style.color = 'black';
+    message.textContent = 'Registering...';
 
-    const data = await res.json();
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
 
-    if (res.ok) {
-      alert('✅ Registration successful! Please log in.');
-      window.location.href = '/login.html';
-    } else {
-      alert(`❌ ${data.message || 'Registration failed'}`);
+    // Client-side check
+    if (!data.userId || !data.email || !data.password) {
+      message.style.color = 'red';
+      message.textContent = 'Please fill in all fields.';
+      return;
     }
-  } catch (err) {
-    console.error('Registration error:', err);
-    alert('❌ Something went wrong. Please try again.');
-  }
+
+    try {
+      const response = await fetch('/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (response.redirected) {
+        window.location.href = response.url;
+      } else {
+        const text = await response.text();
+        message.style.color = 'red';
+        message.textContent = text || 'Registration failed.';
+      }
+    } catch (err) {
+      console.error('Register error:', err);
+      message.style.color = 'red';
+      message.textContent = 'An error occurred. Please try again.';
+    }
+  });
 });

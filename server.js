@@ -45,6 +45,18 @@ const Message = mongoose.model('Message', messageSchema);
 // ✅ Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
+
+const path = require('path');
+
+// ✅ Protect chat.html
+app.get('/chat.html', (req, res) => {
+  if (!req.session.username) {
+    return res.redirect('/login.html');
+  }
+
+  res.sendFile(path.join(__dirname, 'protected', 'chat.html'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ✅ Redirect root path to login page

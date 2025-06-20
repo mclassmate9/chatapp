@@ -1,6 +1,7 @@
 const socket = io();
   let username = '';
   let typingTimeout;
+  let selectedContact = null;
 
   const messagesList = document.getElementById('messages');
   const typingIndicator = document.getElementById('typingIndicator');
@@ -157,6 +158,25 @@ socket.on('chat message', (msg) => {
       statusDot.classList.add('offline');
       statusDot.textContent = 'Offline';
     });
+
+// Fetch approved contacts
+fetch('/user/approved')
+  .then(res => res.json())
+  .then(contacts => {
+    const selector = document.getElementById('contactSelector');
+    contacts.forEach(contact => {
+      const option = document.createElement('option');
+      option.value = contact;
+      option.textContent = contact;
+      selector.appendChild(option);
+    });
+
+    selector.addEventListener('change', () => {
+      selectedContact = selector.value;
+      document.getElementById('chat-username').textContent = `Chat with ${selectedContact}`;
+      refreshChat(); // Filter messages
+    });
+  });
 
 // Load contacts
 fetch('/api/contacts')

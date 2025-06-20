@@ -12,6 +12,18 @@
     <div class="loaderText">Wait bro Connecting to server...</div>
   </div>
 
+<!-- Add this inside <body> just below #loadingOverlay -->
+<div class="chat-layout">
+  <aside id="contactSidebar">
+    <h3>Your Contacts</h3>
+    <ul id="contactList"></ul>
+
+    <input type="text" id="newContactId" placeholder="Enter user ID">
+    <button id="addContactBtn">Add Contact</button>
+  </aside>
+
+  <main class="chat-panel">
+   
   <div class="chat-container">
     <div class="chat-header">
       <span id="user-status" class="offline">Offline</span>
@@ -31,7 +43,10 @@
       </div>
     </form>
   </div>
-
+ 
+  </main>
+</div>
+    
   <script src="/socket.io/socket.io.js"></script>
   
   <script src="public/scripts/chat.js" defer></script>

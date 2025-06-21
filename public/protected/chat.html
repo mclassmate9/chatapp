@@ -55,6 +55,32 @@
  
   </main>
 </div>
+
+<!-- Contacts Sidebar -->
+<div id="contactsSidebar" class="sidebar hidden">
+  <div class="sidebar-header">
+    <h3>Manage Contacts</h3>
+    <button onclick="toggleSidebar()">✖</button>
+  </div>
+  <div id="sidebarContent">
+    <form id="addContactFormSidebar">
+      <input type="text" id="contactIdSidebar" placeholder="Enter User ID" required />
+      <button type="submit">Add Contact</button>
+    </form>
+
+    <h4>Pending Requests</h4>
+    <ul id="pendingListSidebar"></ul>
+
+    <h4>Received Requests</h4>
+    <ul id="receivedListSidebar"></ul>
+
+    <h4>Approved Contacts</h4>
+    <ul id="approvedListSidebar"></ul>
+  </div>
+</div>
+
+<!-- Toggle Sidebar Button -->
+<button id="toggleSidebarBtn" class="sidebar-toggle">👥 Contacts</button>
     
   <script src="/socket.io/socket.io.js"></script>
   

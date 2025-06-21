@@ -18,7 +18,7 @@ router.post('/request', async (req, res) => {
     if (!to) return res.status(404).json({ message: 'User not found' });
 
     // Check if already exists
-    const alreadyRequested = from.contacts.find(c => c.userId === toUserId);
+    const alreadyRequested = to.contacts.find(c => c.userId === fromUser);
     if (alreadyRequested) return res.status(409).json({ message: 'Request already sent or exists' });
 
     // Add contact to sender

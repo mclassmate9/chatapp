@@ -36,41 +36,7 @@ router.post('/request', async (req, res) => {
   }
 });
 
-// ✅ Accept a contact request
-router.post('/accept', async (req, res) => {
-  const currentUser = req.session.username;
-  const requester = req.body.from;
 
-  if (!currentUser || !requester) {
-    return res.status(400).json({ message: 'Invalid request' });
-  }
-
-  try {
-    const user = await User.findOne({ userId: currentUser });
-    const sender = await User.findOne({ userId: requester });
-
-    if (!user || !sender) return res.status(404).json({ message: 'User not found' });
-
-    // Update both users’ contact statuses to 'approved'
-    const contactA = user.contacts.find(c => c.userId === requester);
-    const contactB = sender.contacts.find(c => c.userId === currentUser);
-
-    if (!contactA || !contactB) {
-      return res.status(400).json({ message: 'Request not found' });
-    }
-
-    contactA.status = 'approved';
-    contactB.status = 'approved';
-
-    await user.save();
-    await sender.save();
-
-    res.status(200).json({ message: 'Contact approved' });
-  } catch (err) {
-    console.error('Accept error:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
 
 // ✅ Reject a contact request
 router.post('/reject', async (req, res) => {
@@ -97,6 +63,51 @@ router.post('/reject', async (req, res) => {
     res.status(200).json({ message: 'Contact request rejected' });
   } catch (err) {
     console.error('Reject error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ✅ Accept a contact request
+router.post('/accept', async (req, res) => {
+  const currentUser = req.session.username;
+  const requester = req.body.from;
+
+  if (!currentUser || !requester || currentUser === requester) {
+    return res.status(400).json({ message: 'Invalid request' });
+  }
+
+  try {
+    const user = await User.findOne({ userId: currentUser });
+    const sender = await User.findOne({ userId: requester });
+
+    if (!user || !sender) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Find or add contact on current user's side
+    let contactA = user.contacts.find(c => c.userId === requester);
+    if (!contactA) {
+      contactA = { userId: requester, status: 'approved' };
+      user.contacts.push(contactA);
+    } else {
+      contactA.status = 'approved';
+    }
+
+    // Find or add contact on requester's side
+    let contactB = sender.contacts.find(c => c.userId === currentUser);
+    if (!contactB) {
+      contactB = { userId: currentUser, status: 'approved' };
+      sender.contacts.push(contactB);
+    } else {
+      contactB.status = 'approved';
+    }
+
+    await user.save();
+    await sender.save();
+
+    res.status(200).json({ message: 'Contact approved successfully' });
+  } catch (err) {
+    console.error('Accept error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

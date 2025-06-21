@@ -22,4 +22,11 @@ contacts: [
 ],
 });
 
+pendingRequests: [
+  {
+    userId: String,
+    date: { type: Date, default: Date.now }
+  }
+]
+
 module.exports = mongoose.model('User', userSchema);

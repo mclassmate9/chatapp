@@ -13,7 +13,22 @@ const contactRoutes = require('./routes/contacts');
 
 const app = express();
 const server = http.createServer(app);
+
+// ✅ Create session middleware FIRST
+const sessionMiddleware = session({
+  secret: 'chatSecretKey',
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+  cookie: { maxAge: null }
+});
+
+// ✅ Attach to Express
+app.use(sessionMiddleware);
+
+// ✅ Attach to Socket.IO
 const io = socketio(server);
+io.engine.use(sessionMiddleware); // 🔥 THIS is critical!
 
 // ✅ MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {

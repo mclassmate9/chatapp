@@ -266,3 +266,18 @@
   color: #007bff;
   font-weight: bold;
 }
+
+.contact-btn {
+  margin: 10px;
+  padding: 8px 12px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: none;
+}
+.contact-btn:hover {
+  background-color: #45a049;
+}

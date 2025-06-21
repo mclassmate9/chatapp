@@ -284,3 +284,75 @@ function handleRequest(action, fromUser) {
 
 // 🔃 Load when chat loads
 loadPendingRequests();
+
+function toggleSidebar() {
+  document.getElementById('contactsSidebar').classList.toggle('hidden');
+}
+
+document.getElementById('addContactFormSidebar').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const contactId = document.getElementById('contactIdSidebar').value.trim();
+  if (!contactId) return;
+
+  const res = await fetch('/user/contacts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contactId }),
+  });
+
+  const text = await res.text();
+  alert(text);
+  document.getElementById('contactIdSidebar').value = '';
+  loadSidebarContacts();
+});
+
+window.approveRequest = async (contactId) => {
+  await fetch('/user/contacts/approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contactId }),
+  });
+  loadSidebarContacts();
+};
+
+window.cancelRequest = async (contactId) => {
+  await fetch('/user/contacts/cancel', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contactId }),
+  });
+  loadSidebarContacts();
+};
+
+async function loadSidebarContacts() {
+  const res = await fetch('/user/contacts');
+  const contacts = await res.json();
+
+  const pendingList = document.getElementById('pendingListSidebar');
+  const receivedList = document.getElementById('receivedListSidebar');
+  const approvedList = document.getElementById('approvedListSidebar');
+
+  pendingList.innerHTML = '';
+  receivedList.innerHTML = '';
+  approvedList.innerHTML = '';
+
+  contacts.forEach(contact => {
+    const li = document.createElement('li');
+    li.textContent = contact.userId;
+
+    if (contact.status === 'pending') {
+      li.innerHTML += ` <button onclick="cancelRequest('${contact.userId}')">Cancel</button>`;
+      pendingList.appendChild(li);
+    } else if (contact.status === 'received') {
+      li.innerHTML += ` <button onclick="approveRequest('${contact.userId}')">Approve</button>`;
+      receivedList.appendChild(li);
+    } else if (contact.status === 'approved') {
+      approvedList.appendChild(li);
+    }
+  });
+}
+
+// Load contacts when chat opens
+loadSidebarContacts();
+
+

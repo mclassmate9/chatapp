@@ -1,358 +1,114 @@
-const socket = io({
-  autoConnect: false,
-  withCredentials: true
-});
+// chat.js import { fetchCurrentUser, fetchAllContacts, sendContactRequest, approveContact, cancelContact } from './contactsCore.js';
 
-let username = '';
-let typingTimeout;
-let selectedContact = null;
+const socket = io({ autoConnect: false, withCredentials: true });
 
-const messagesList = document.getElementById('messages');
-const typingIndicator = document.getElementById('typingIndicator');
-const statusDot = document.getElementById('user-status');
-const newMessageBadge = document.getElementById('newMessageBadge');
-const loadingOverlay = document.getElementById('loadingOverlay');
-const contactList = document.getElementById('contactList');
-const newContactId = document.getElementById('newContactId');
-const addContactBtn = document.getElementById('addContactBtn');
+let username = ''; let typingTimeout; let selectedContact = null;
 
-// ✅ Socket events
-socket.on('connect', () => {
-  console.log('✅ Socket connected');
-  loadingOverlay.classList.add('hidden');
-});
+const messagesList = document.getElementById('messages'); const typingIndicator = document.getElementById('typingIndicator'); const statusDot = document.getElementById('user-status'); const newMessageBadge = document.getElementById('newMessageBadge'); const loadingOverlay = document.getElementById('loadingOverlay'); const contactList = document.getElementById('contactList'); const newContactId = document.getElementById('newContactId'); const addContactBtn = document.getElementById('addContactBtn');
 
-socket.on('connect_error', (err) => {
-  console.error('❌ Socket connect error:', err.message);
-  loadingOverlay.classList.remove('hidden');
-});
+// ✅ Socket events socket.on('connect', () => { console.log('✅ Socket connected'); loadingOverlay.classList.add('hidden'); });
 
-socket.on('disconnect', () => {
-  console.warn('⚠️ Socket disconnected');
-  loadingOverlay.classList.remove('hidden');
-});
+socket.on('connect_error', (err) => { console.error('❌ Socket connect error:', err.message); loadingOverlay.classList.remove('hidden'); });
 
-socket.on('not-authenticated', () => {
-  window.location.href = '/login.html';
-});
+socket.on('disconnect', () => { console.warn('⚠️ Socket disconnected'); loadingOverlay.classList.remove('hidden'); });
 
-socket.on('chat history', (messages) => {
-  messagesList.innerHTML = '';
-  messages.forEach(addMessage);
-  scrollToBottom(true);
-});
+socket.on('not-authenticated', () => { window.location.href = '/login.html'; });
 
-socket.on('chat message', (msg) => {
-  addMessage(msg);
+socket.on('chat history', (messages) => { messagesList.innerHTML = ''; messages.forEach(addMessage); scrollToBottom(true); });
 
-  if (msg.user !== username) {
-    socket.emit('message delivered', msg._id);
-    const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 150;
-    if (isAtBottom) {
-      socket.emit('message seen', msg._id);
-    }
-  }
+socket.on('chat message', (msg) => { addMessage(msg);
 
-  scrollToBottom();
-});
+if (msg.user !== username) { socket.emit('message delivered', msg._id); const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 150; if (isAtBottom) { socket.emit('message seen', msg._id); } }
 
-socket.on('typing', (user) => {
-  if (user !== username) {
-    typingIndicator.textContent = `${user} is typing...`;
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => {
-      typingIndicator.textContent = '';
-    }, 2000);
-  }
-});
+scrollToBottom(); });
 
-// ✅ Message handling
-function scrollToBottom(force = false) {
-  const scrollThreshold = 150;
-  const distanceFromBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight;
+socket.on('typing', (user) => { if (user !== username) { typingIndicator.textContent = ${user} is typing...; clearTimeout(typingTimeout); typingTimeout = setTimeout(() => { typingIndicator.textContent = ''; }, 2000); } });
 
-  if (force || distanceFromBottom < scrollThreshold) {
-    messagesList.scrollTop = messagesList.scrollHeight;
-    newMessageBadge.style.display = 'none';
-  } else {
-    newMessageBadge.style.display = 'block';
-  }
-}
+// ✅ Message handling function scrollToBottom(force = false) { const scrollThreshold = 150; const distanceFromBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight;
 
-function addMessage(msg) {
-  if ((msg.user !== username && msg.user !== selectedContact) ||
-      (msg.user === username && msg.to !== selectedContact)) {
-    return;
-  }
+if (force || distanceFromBottom < scrollThreshold) { messagesList.scrollTop = messagesList.scrollHeight; newMessageBadge.style.display = 'none'; } else { newMessageBadge.style.display = 'block'; } }
 
-  const item = document.createElement('li');
-  const isSelf = msg.user === username;
-  item.classList.add(isSelf ? 'message-sent' : 'message-received');
-  item.textContent = isSelf ? msg.text : `${msg.user}: ${msg.text}`;
-  item.dataset.id = msg._id;
-  item.dataset.sender = msg.user;
+function addMessage(msg) { if ((msg.user !== username && msg.user !== selectedContact) || (msg.user === username && msg.to !== selectedContact)) { return; }
 
-  if (isSelf && msg.status) {
-    const statusSpan = document.createElement('span');
-    statusSpan.className = 'status-badge';
-    statusSpan.textContent =
-      msg.status === 'sent' ? '✓' :
-      msg.status === 'delivered' ? '✓✓' :
-      msg.status === 'seen' ? '✓✓ Seen' : '';
-    item.appendChild(statusSpan);
-  }
+const item = document.createElement('li'); const isSelf = msg.user === username; item.classList.add(isSelf ? 'message-sent' : 'message-received'); item.textContent = isSelf ? msg.text : ${msg.user}: ${msg.text}; item.dataset.id = msg._id; item.dataset.sender = msg.user;
 
-  if (isSelf) {
-    const delBtn = document.createElement('button');
-    delBtn.textContent = '🗑️';
-    delBtn.style.marginLeft = '10px';
-    delBtn.style.background = 'transparent';
-    delBtn.style.border = 'none';
-    delBtn.style.cursor = 'pointer';
-    delBtn.onclick = () => socket.emit('delete message', msg._id);
-    item.appendChild(delBtn);
-  }
+if (isSelf && msg.status) { const statusSpan = document.createElement('span'); statusSpan.className = 'status-badge'; statusSpan.textContent = msg.status === 'sent' ? '✓' : msg.status === 'delivered' ? '✓✓' : msg.status === 'seen' ? '✓✓ Seen' : ''; item.appendChild(statusSpan); }
 
-  messagesList.appendChild(item);
-}
+if (isSelf) { const delBtn = document.createElement('button'); delBtn.textContent = '🗑️'; delBtn.style.marginLeft = '10px'; delBtn.style.background = 'transparent'; delBtn.style.border = 'none'; delBtn.style.cursor = 'pointer'; delBtn.onclick = () => socket.emit('delete message', msg._id); item.appendChild(delBtn); }
+
+messagesList.appendChild(item); }
 
 newMessageBadge.addEventListener('click', () => scrollToBottom(true));
 
-messagesList.addEventListener('scroll', () => {
-  const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100;
-  if (isAtBottom) newMessageBadge.style.display = 'none';
+messagesList.addEventListener('scroll', () => { const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100; if (isAtBottom) newMessageBadge.style.display = 'none';
 
-  const messageItems = messagesList.querySelectorAll('li');
-  messageItems.forEach(item => {
-    const rect = item.getBoundingClientRect();
-    const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+const messageItems = messagesList.querySelectorAll('li'); messageItems.forEach(item => { const rect = item.getBoundingClientRect(); const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
 
-    if (visible && item.dataset.id && item.dataset.sender !== username) {
-      socket.emit('message seen', item.dataset.id);
-    }
-  });
-});
-
-// ✅ Form & input events
-document.getElementById('form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const input = document.getElementById('input');
-  const messageText = input.value.trim();
-
-  if (!selectedContact) {
-    alert('Please select a contact to chat with.');
-    return;
-  }
-
-  if (messageText) {
-    socket.emit('chat message', {
-      to: selectedContact,
-      text: messageText
-    });
-
-    input.value = '';
-    socket.emit('typing', false);
-  }
-});
-
-document.getElementById('input').addEventListener('input', () => {
-  socket.emit('typing', true);
-});
-
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  if (confirm('Are you sure you want to logout?')) {
-    fetch('/logout').then(() => (window.location.href = '/login.html'));
-  }
-});
-
-// ✅ Session check + Socket connect
-fetch('/api/user')
-  .then(res => {
-    if (!res.ok) throw new Error('Not authenticated');
-    return res.json();
-  })
-  .then(data => {
-    username = data.username;
-    document.getElementById('chat-username').textContent = `Chat with ${username}`;
-    statusDot.classList.replace('offline', 'online');
-    statusDot.textContent = 'Online';
-    socket.connect();
-    loadingOverlay.classList.add('hidden');
-  })
-  .catch(err => {
-    console.error('Auth-check failed:', err);
-    window.location.href = '/login.html';
-  });
-
-// ✅ Load approved contacts for chat
-fetch('/user/approved')
-  .then(res => res.json())
-  .then(contacts => {
-    const selector = document.getElementById('contactSelector');
-    contacts.forEach(contact => {
-      const option = document.createElement('option');
-      option.value = contact;
-      option.textContent = contact;
-      selector.appendChild(option);
-    });
-
-    selector.addEventListener('change', () => {
-      selectedContact = selector.value;
-      document.getElementById('chat-username').textContent = `Chat with ${selectedContact}`;
-      refreshChat(); // 🔄 Optional: if implemented
-    });
-  });
-
-// ✅ Load contact list
-fetch('/api/contacts')
-  .then(res => res.json())
-  .then(contacts => {
-    contacts.forEach(contact => {
-      const li = document.createElement('li');
-      li.textContent = contact;
-      li.addEventListener('click', () => {
-        alert(`Open chat with ${contact}`);
-      });
-      contactList.appendChild(li);
-    });
-  });
-
-// ✅ Add contact
-addContactBtn.addEventListener('click', () => {
-  const contactId = newContactId.value.trim();
-  if (!contactId) return;
-
-  fetch('/contacts/request', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ to:contactId })
-  })
-    .then(res => {
-      if (!res.ok) throw new Error('Failed to add contact');
-      const li = document.createElement('li');
-      li.textContent = contactId;
-      li.addEventListener('click', () => {
-        alert(`Open chat with ${contactId}`);
-      });
-      contactList.appendChild(li);
-      newContactId.value = '';
-    })
-    .catch(err => alert(err.message));
-});
-
-// 🔄 Load pending requests
-function loadPendingRequests() {
-  fetch('/contacts/pending')
-    .then(res => res.json())
-    .then(data => {
-      const pendingList = document.getElementById('pendingList');
-      pendingList.innerHTML = '';
-
-      data.pending.forEach(requester => {
-        const li = document.createElement('li');
-        li.textContent = requester + ' ';
-
-        const acceptBtn = document.createElement('button');
-        acceptBtn.textContent = '✅ Accept';
-        acceptBtn.onclick = () => handleRequest('accept', requester);
-
-        const rejectBtn = document.createElement('button');
-        rejectBtn.textContent = '❌ Reject';
-        rejectBtn.onclick = () => handleRequest('reject', requester);
-
-        li.appendChild(acceptBtn);
-        li.appendChild(rejectBtn);
-        pendingList.appendChild(li);
-      });
-    });
+if (visible && item.dataset.id && item.dataset.sender !== username) {
+  socket.emit('message seen', item.dataset.id);
 }
 
-// 🔁 Accept or Reject Request
-function handleRequest(action, fromUser) {
-  fetch(`/contacts/${action}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ from: fromUser })
-  })
-    .then(res => res.json())
-    .then(data => {
-      alert(data.message);
-      loadPendingRequests(); // refresh list
-    })
-    .catch(err => alert('Error: ' + err.message));
-}
+}); });
 
-// 🔃 Load when chat loads
-loadPendingRequests();
+// ✅ Form & input events document.getElementById('form').addEventListener('submit', (e) => { e.preventDefault(); const input = document.getElementById('input'); const messageText = input.value.trim();
 
-function toggleSidebar() {
-  document.getElementById('contactsSidebar').classList.toggle('hidden');
-}
+if (!selectedContact) { alert('Please select a contact to chat with.'); return; }
 
-document.getElementById('addContactFormSidebar').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const contactId = document.getElementById('contactIdSidebar').value.trim();
-  if (!contactId) return;
+if (messageText) { socket.emit('chat message', { to: selectedContact, text: messageText });
 
-  const res = await fetch('/user/contacts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contactId }),
-  });
+input.value = '';
+socket.emit('typing', false);
 
-  const text = await res.text();
-  alert(text);
-  document.getElementById('contactIdSidebar').value = '';
-  loadSidebarContacts();
+} });
+
+document.getElementById('input').addEventListener('input', () => { socket.emit('typing', true); });
+
+document.getElementById('logoutBtn').addEventListener('click', () => { if (confirm('Are you sure you want to logout?')) { fetch('/logout').then(() => (window.location.href = '/login.html')); } });
+
+// ✅ Session check + Socket connect fetchCurrentUser() .then(data => { username = data.username; document.getElementById('chat-username').textContent = Chat with ${username}; statusDot.classList.replace('offline', 'online'); statusDot.textContent = 'Online'; socket.connect(); loadingOverlay.classList.add('hidden'); }) .catch(err => { console.error('Auth-check failed:', err); window.location.href = '/login.html'; });
+
+// ✅ Load approved contacts for chat fetch('/user/approved') .then(res => res.json()) .then(contacts => { const selector = document.getElementById('contactSelector'); contacts.forEach(contact => { const option = document.createElement('option'); option.value = contact; option.textContent = contact; selector.appendChild(option); });
+
+selector.addEventListener('change', () => {
+  selectedContact = selector.value;
+  document.getElementById('chat-username').textContent = `Chat with ${selectedContact}`;
 });
 
-window.approveRequest = async (contactId) => {
-  await fetch('/user/contacts/approve', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contactId }),
-  });
-  loadSidebarContacts();
-};
+});
 
-window.cancelRequest = async (contactId) => {
-  await fetch('/user/contacts/cancel', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contactId }),
-  });
-  loadSidebarContacts();
-};
+// ✅ Add contact via sidebar addContactBtn.addEventListener('click', () => { const contactId = newContactId.value.trim(); if (!contactId) return;
 
-async function loadSidebarContacts() {
-  const res = await fetch('/user/contacts');
-  const contacts = await res.json();
+sendContactRequest(contactId) .then(text => { alert(text); newContactId.value = ''; loadSidebarContacts(); }) .catch(err => alert(err.message)); });
 
-  const pendingList = document.getElementById('pendingListSidebar');
-  const receivedList = document.getElementById('receivedListSidebar');
-  const approvedList = document.getElementById('approvedListSidebar');
+// 🔃 Sidebar Contact Management function toggleSidebar() { document.getElementById('contactsSidebar').classList.toggle('hidden'); }
 
-  pendingList.innerHTML = '';
-  receivedList.innerHTML = '';
-  approvedList.innerHTML = '';
+document.getElementById('addContactFormSidebar').addEventListener('submit', async (e) => { e.preventDefault(); const contactId = document.getElementById('contactIdSidebar').value.trim(); if (!contactId) return;
 
-  contacts.forEach(contact => {
-    const li = document.createElement('li');
-    li.textContent = contact.userId;
+const text = await sendContactRequest(contactId); alert(text); document.getElementById('contactIdSidebar').value = ''; loadSidebarContacts(); });
 
-    if (contact.status === 'pending') {
-      li.innerHTML += ` <button onclick="cancelRequest('${contact.userId}')">Cancel</button>`;
-      pendingList.appendChild(li);
-    } else if (contact.status === 'received') {
-      li.innerHTML += ` <button onclick="approveRequest('${contact.userId}')">Approve</button>`;
-      receivedList.appendChild(li);
-    } else if (contact.status === 'approved') {
-      approvedList.appendChild(li);
-    }
-  });
+window.approveRequest = async (contactId) => { await approveContact(contactId); loadSidebarContacts(); };
+
+window.cancelRequest = async (contactId) => { await cancelContact(contactId); loadSidebarContacts(); };
+
+async function loadSidebarContacts() { const contacts = await fetchAllContacts();
+
+const pendingList = document.getElementById('pendingListSidebar'); const receivedList = document.getElementById('receivedListSidebar'); const approvedList = document.getElementById('approvedListSidebar');
+
+pendingList.innerHTML = ''; receivedList.innerHTML = ''; approvedList.innerHTML = '';
+
+contacts.forEach(contact => { const li = document.createElement('li'); li.textContent = contact.userId;
+
+if (contact.status === 'pending') {
+  li.innerHTML += ` <button onclick="cancelRequest('${contact.userId}')">Cancel</button>`;
+  pendingList.appendChild(li);
+} else if (contact.status === 'received') {
+  li.innerHTML += ` <button onclick="approveRequest('${contact.userId}')">Approve</button>`;
+  receivedList.appendChild(li);
+} else if (contact.status === 'approved') {
+  approvedList.appendChild(li);
 }
 
-// Load contacts when chat opens
-loadSidebarContacts();
+}); }
 
+// Load contacts when chat opens loadSidebarContacts();
 

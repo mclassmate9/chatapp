@@ -222,10 +222,10 @@ addContactBtn.addEventListener('click', () => {
   const contactId = newContactId.value.trim();
   if (!contactId) return;
 
-  fetch('/api/contacts/add', {
+  fetch('/contacts/request', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ contactId })
+    body: new URLSearchParams({ to:contactId })
   })
     .then(res => {
       if (!res.ok) throw new Error('Failed to add contact');

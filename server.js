@@ -43,7 +43,7 @@ const messageSchema = new mongoose.Schema({
   time: { type: Date, default: Date.now, expires:345600 },//4days in seconds to auto delete messages
   status: { type: String, enum: ['sent', 'delivered', 'seen'], default: 'sent' }
 });
-const Message = mongoose.model('Message', messageSchema);
+const Message = require('./models/Message');
 
 // ✅ Middleware
 app.use(express.urlencoded({ extended: true }));

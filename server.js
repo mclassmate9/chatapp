@@ -162,7 +162,11 @@ app.get('/api/user', (req, res) => {
 
 // ✅ Apply session to socket
 io.use((socket, next) => {
-  sessionMiddleware(socket.request, {}, next);
+  if (socket.request.session?.username) {
+    next();
+  } else {
+    next(new Error("not-authenticated"));
+  }
 });
 
 // ✅ Online user tracking

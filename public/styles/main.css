@@ -261,3 +261,8 @@
   display: flex;
   flex-direction: column;
 }
+
+#currentUser {
+  color: #007bff;
+  font-weight: bold;
+}

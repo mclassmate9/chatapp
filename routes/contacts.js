@@ -94,16 +94,19 @@ router.post('/reject', async (req, res) => {
     const user = await User.findOne({ userId: currentUser });
     const sender = await User.findOne({ userId: requester });
 
-    if (!user || !sender) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: 'Current user not found' });
 
-    // Remove each other from contacts
+    // Remove requester from current user's contacts
     user.contacts = user.contacts.filter(c => c.userId !== requester);
-    sender.contacts = sender.contacts.filter(c => c.userId !== currentUser);
-
     await user.save();
-    await sender.save();
 
-    res.status(200).json({ message: 'Contact request rejected' });
+    // If sender exists, remove currentUser from their contacts
+    if (sender) {
+      sender.contacts = sender.contacts.filter(c => c.userId !== currentUser);
+      await sender.save();
+    }
+
+    res.status(200).json({ message: 'Contact request rejected successfully' });
   } catch (err) {
     console.error('Reject error:', err);
     res.status(500).json({ message: 'Server error' });

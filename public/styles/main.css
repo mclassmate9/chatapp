@@ -281,3 +281,54 @@
 .contact-btn:hover {
   background-color: #45a049;
 }
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100%;
+  background: #f9f9f9;
+  border-left: 1px solid #ccc;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+  padding: 15px;
+  overflow-y: auto;
+  z-index: 999;
+  transition: transform 0.3s ease;
+}
+.sidebar.hidden {
+  transform: translateX(100%);
+}
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sidebar-toggle {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 1000;
+}
+.sidebar-toggle:hover {
+  background: #45a049;
+}
+.sidebar h4 {
+  margin-top: 20px;
+}
+.sidebar ul {
+  list-style: none;
+  padding-left: 0;
+}
+.sidebar li {
+  padding: 6px 0;
+}
+.sidebar button {
+  margin-left: 10px;
+}

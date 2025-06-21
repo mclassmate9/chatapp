@@ -36,37 +36,6 @@ router.post('/request', async (req, res) => {
   }
 });
 
-
-
-// ✅ Reject a contact request
-router.post('/reject', async (req, res) => {
-  const currentUser = req.session.username;
-  const requester = req.body.from;
-
-  if (!currentUser || !requester) {
-    return res.status(400).json({ message: 'Invalid request' });
-  }
-
-  try {
-    const user = await User.findOne({ userId: currentUser });
-    const sender = await User.findOne({ userId: requester });
-
-    if (!user || !sender) return res.status(404).json({ message: 'User not found' });
-
-    // Remove each other from contacts
-    user.contacts = user.contacts.filter(c => c.userId !== requester);
-    sender.contacts = sender.contacts.filter(c => c.userId !== currentUser);
-
-    await user.save();
-    await sender.save();
-
-    res.status(200).json({ message: 'Contact request rejected' });
-  } catch (err) {
-    console.error('Reject error:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
 // ✅ Accept a contact request
 router.post('/accept', async (req, res) => {
   const currentUser = req.session.username;
@@ -111,6 +80,37 @@ router.post('/accept', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// ✅ Reject a contact request
+router.post('/reject', async (req, res) => {
+  const currentUser = req.session.username;
+  const requester = req.body.from;
+
+  if (!currentUser || !requester) {
+    return res.status(400).json({ message: 'Invalid request' });
+  }
+
+  try {
+    const user = await User.findOne({ userId: currentUser });
+    const sender = await User.findOne({ userId: requester });
+
+    if (!user || !sender) return res.status(404).json({ message: 'User not found' });
+
+    // Remove each other from contacts
+    user.contacts = user.contacts.filter(c => c.userId !== requester);
+    sender.contacts = sender.contacts.filter(c => c.userId !== currentUser);
+
+    await user.save();
+    await sender.save();
+
+    res.status(200).json({ message: 'Contact request rejected' });
+  } catch (err) {
+    console.error('Reject error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
 
 // ✅ Get approved contacts
 router.get('/list', async (req, res) => {

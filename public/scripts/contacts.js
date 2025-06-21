@@ -5,8 +5,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const pendingList = document.getElementById('pendingList');
   const receivedList = document.getElementById('receivedList');
   const approvedList = document.getElementById('approvedList');
+  const currentUserDisplay = document.getElementById('currentUser'); // optional
 
-  // Fetch and render contacts
+  let currentUser = '';
+
+  // ✅ Step 1: Verify user session
+  fetch('/api/user')
+    .then(res => {
+      if (!res.ok) throw new Error('Not authenticated');
+      return res.json();
+    })
+    .then(data => {
+      currentUser = data.username;
+      if (currentUserDisplay) {
+        currentUserDisplay.textContent = currentUser;
+      }
+      fetchContacts(); // ✅ now load contacts
+    })
+    .catch(err => {
+      console.error('User not logged in:', err);
+      window.location.href = '/login.html';
+    });
+
+  // ✅ Step 2: Fetch and render contacts
   async function fetchContacts() {
     const res = await fetch('/user/contacts');
     const contacts = await res.json();
@@ -19,10 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const li = document.createElement('li');
       li.textContent = contact.userId;
 
-      if (contact.status === 'pending') {
+      if (contact.status === 'pending' && contact.sentBy === currentUser) {
         li.innerHTML += ` <button onclick="cancelRequest('${contact.userId}')">Cancel</button>`;
         pendingList.appendChild(li);
-      } else if (contact.status === 'received') {
+      } else if (contact.status === 'pending' && contact.sentBy !== currentUser) {
         li.innerHTML += ` <button onclick="approveRequest('${contact.userId}')">Approve</button>`;
         receivedList.appendChild(li);
       } else if (contact.status === 'approved') {
@@ -31,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Send contact request
+  // ✅ Step 3: Send contact request
   addForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const contactId = contactIdInput.value.trim();
@@ -49,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchContacts();
   });
 
-  // Expose global approve and cancel
+  // ✅ Step 4: Expose global approve and cancel
   window.approveRequest = async (contactId) => {
     await fetch('/user/contacts/approve', {
       method: 'POST',
@@ -67,7 +88,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     fetchContacts();
   };
-
-  fetchContacts();
 });
-

@@ -239,3 +239,48 @@ addContactBtn.addEventListener('click', () => {
     })
     .catch(err => alert(err.message));
 });
+
+// 🔄 Load pending requests
+function loadPendingRequests() {
+  fetch('/contacts/pending')
+    .then(res => res.json())
+    .then(data => {
+      const pendingList = document.getElementById('pendingList');
+      pendingList.innerHTML = '';
+
+      data.pending.forEach(requester => {
+        const li = document.createElement('li');
+        li.textContent = requester + ' ';
+
+        const acceptBtn = document.createElement('button');
+        acceptBtn.textContent = '✅ Accept';
+        acceptBtn.onclick = () => handleRequest('accept', requester);
+
+        const rejectBtn = document.createElement('button');
+        rejectBtn.textContent = '❌ Reject';
+        rejectBtn.onclick = () => handleRequest('reject', requester);
+
+        li.appendChild(acceptBtn);
+        li.appendChild(rejectBtn);
+        pendingList.appendChild(li);
+      });
+    });
+}
+
+// 🔁 Accept or Reject Request
+function handleRequest(action, fromUser) {
+  fetch(`/contacts/${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ from: fromUser })
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      loadPendingRequests(); // refresh list
+    })
+    .catch(err => alert('Error: ' + err.message));
+}
+
+// 🔃 Load when chat loads
+loadPendingRequests();

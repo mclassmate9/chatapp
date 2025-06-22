@@ -10,6 +10,8 @@ import {
 
 const socket = io({ autoConnect: false, withCredentials: true });
 
+console.log('🎯 Attempting socket connection...');
+
 let username = '';
 let selectedContact = null;
 let typingTimeout = null;

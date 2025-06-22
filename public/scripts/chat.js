@@ -194,9 +194,11 @@ fetchCurrentUser().then(user => {
 });
 
 // ✅ Load Approved Contacts
-fetch('/user/approved')
+
+fetch('/contacts/list')
   .then(res => res.json())
-  .then(contacts => {
+  .then(data => {
+    const contacts = data.contacts; // correct structure
     contacts.forEach(contact => {
       const option = document.createElement('option');
       option.value = contact;
@@ -208,8 +210,10 @@ fetch('/user/approved')
       selectedContact = contactSelector.value;
       chatUsername.textContent = `Chat with ${selectedContact}`;
     });
+  })
+  .catch(err => {
+    console.error('Failed to load approved contacts:', err);
   });
-
 // ✅ Add Contact via mini input
 addContactBtn.addEventListener('click', () => {
   const contactId = newContactId.value.trim();

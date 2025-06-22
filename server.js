@@ -43,7 +43,9 @@ app.use(express.json());
 app.use(sessionMiddleware);
 
 // ✅ Share session with Socket.IO
-io.engine.use(sessionMiddleware);
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, {}, next);
+});
 
 // ✅ Serve static files
 app.use(express.static(path.join(__dirname, 'public')));

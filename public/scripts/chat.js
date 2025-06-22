@@ -1,4 +1,3 @@
-// chat.js
 import {
   fetchCurrentUser,
   fetchAllContacts,
@@ -27,7 +26,7 @@ const notificationSound = new Audio('/pop.mp3');
 
 // ✅ Socket Events
 socket.on('connect', () => {
-  console.log('✅ Connected');
+  console.log('✅ Socket connected');
   loadingOverlay.classList.add('hidden');
 });
 
@@ -57,11 +56,9 @@ socket.on('chat message', (msg) => {
   if (msg.user !== username) {
     socket.emit('message delivered', msg._id);
     const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 150;
-
     if (isAtBottom) {
       socket.emit('message seen', msg._id);
     }
-
     notificationSound.play().catch(err => console.warn('🔇 Sound play blocked:', err));
   }
 
@@ -201,12 +198,21 @@ fetch('/contacts/list', { credentials: 'include' })
   .then(res => res.json())
   .then(data => {
     const contacts = data.contacts || [];
+    console.log('📩 Approved contacts loaded:', contacts);
+
     contacts.forEach(contact => {
       const option = document.createElement('option');
       option.value = contact;
       option.textContent = contact;
       contactSelector.appendChild(option);
     });
+
+    // ✅ Auto-select first contact if any
+    if (contacts.length > 0) {
+      selectedContact = contacts[0];
+      contactSelector.value = selectedContact;
+      chatUsername.textContent = `Chat with ${selectedContact}`;
+    }
 
     contactSelector.addEventListener('change', () => {
       selectedContact = contactSelector.value;
@@ -256,7 +262,6 @@ document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
 
 async function loadSidebarContacts() {
   const contacts = await fetchAllContacts();
-
   ['pendingListSidebar', 'receivedListSidebar', 'approvedListSidebar'].forEach(id =>
     document.getElementById(id).innerHTML = ''
   );

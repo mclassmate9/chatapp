@@ -1,3 +1,4 @@
+// chat.js
 import {
   fetchCurrentUser,
   fetchAllContacts,
@@ -26,12 +27,12 @@ const notificationSound = new Audio('/pop.mp3');
 
 // ✅ Socket Events
 socket.on('connect', () => {
-  console.log('✅ Connected to Socket.IO');
+  console.log('✅ Connected');
   loadingOverlay.classList.add('hidden');
 });
 
 socket.on('connect_error', err => {
-  console.error('❌ Socket connection error:', err.message);
+  console.error('❌ Socket error:', err.message);
   loadingOverlay.classList.remove('hidden');
 });
 
@@ -40,7 +41,7 @@ socket.on('not-authenticated', () => {
 });
 
 socket.on('disconnect', () => {
-  console.warn('⚠️ Disconnected from server');
+  console.warn('⚠️ Disconnected');
   loadingOverlay.classList.remove('hidden');
 });
 
@@ -55,12 +56,13 @@ socket.on('chat message', (msg) => {
 
   if (msg.user !== username) {
     socket.emit('message delivered', msg._id);
+    const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 150;
 
-    if (isAtBottom()) {
+    if (isAtBottom) {
       socket.emit('message seen', msg._id);
     }
 
-    notificationSound.play().catch(err => console.warn('🔇 Sound blocked:', err));
+    notificationSound.play().catch(err => console.warn('🔇 Sound play blocked:', err));
   }
 
   scrollToBottom();
@@ -83,11 +85,6 @@ socket.on('message status update', ({ msgId, status }) => {
 
 socket.on('contact update', () => {
   loadSidebarContacts();
-});
-
-// ✅ Debug all socket events
-socket.onAny((event, ...args) => {
-  console.log(`📡 Socket Event: ${event}`, args);
 });
 
 // ✅ Helper Functions
@@ -121,7 +118,8 @@ function addMessage(msg) {
   if (isSelf) {
     const statusSpan = document.createElement('span');
     statusSpan.className = 'status-badge';
-    statusSpan.textContent = msg.status === 'seen' ? '✓✓ Seen' : msg.status === 'delivered' ? '✓✓' : '✓';
+    statusSpan.textContent = msg.status === 'seen' ? '✓✓ Seen' :
+                             msg.status === 'delivered' ? '✓✓' : '✓';
     item.appendChild(statusSpan);
 
     const delBtn = document.createElement('button');
@@ -154,7 +152,8 @@ inputField.addEventListener('input', () => socket.emit('typing'));
 newMessageBadge.addEventListener('click', () => scrollToBottom(true));
 
 messagesList.addEventListener('scroll', () => {
-  if (isAtBottom()) newMessageBadge.style.display = 'none';
+  const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100;
+  if (isAtBottom) newMessageBadge.style.display = 'none';
 
   const messageItems = messagesList.querySelectorAll('li');
   messageItems.forEach(item => {
@@ -162,7 +161,12 @@ messagesList.addEventListener('scroll', () => {
     const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
     const sender = item.dataset.sender;
 
-    if (visible && item.dataset.id && sender !== username && sender === selectedContact) {
+    if (
+      visible &&
+      item.dataset.id &&
+      sender !== username &&
+      sender === selectedContact
+    ) {
       socket.emit('message seen', item.dataset.id);
     }
   });
@@ -174,8 +178,12 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   }
 });
 
-// ✅ Load Current User and connect socket
-fetchCurrentUser()
+// ✅ Load Current User
+fetch('/api/user', { credentials: 'include' })
+  .then(res => {
+    if (!res.ok) throw new Error('Not authenticated');
+    return res.json();
+  })
   .then(user => {
     username = user.username;
     chatUsername.textContent = `Chat with ${username}`;
@@ -188,11 +196,11 @@ fetchCurrentUser()
     window.location.href = '/login.html';
   });
 
-// ✅ Load Approved Contacts Dropdown
-fetch('/contacts/list')
+// ✅ Load Approved Contacts
+fetch('/contacts/list', { credentials: 'include' })
   .then(res => res.json())
   .then(data => {
-    const contacts = Array.isArray(data.contacts) ? data.contacts : [];
+    const contacts = data.contacts || [];
     contacts.forEach(contact => {
       const option = document.createElement('option');
       option.value = contact;
@@ -204,9 +212,6 @@ fetch('/contacts/list')
       selectedContact = contactSelector.value;
       chatUsername.textContent = `Chat with ${selectedContact}`;
     });
-  })
-  .catch(err => {
-    console.error('❌ Failed to load approved contacts:', err);
   });
 
 // ✅ Add Contact via mini input
@@ -223,20 +228,16 @@ addContactBtn.addEventListener('click', () => {
     .catch(err => alert(err.message));
 });
 
-// ✅ Contact Sidebar Logic
+// ✅ Contact Sidebar
 document.getElementById('addContactFormSidebar').addEventListener('submit', async (e) => {
   e.preventDefault();
   const contactId = document.getElementById('contactIdSidebar').value.trim();
   if (!contactId) return;
 
-  try {
-    const msg = await sendContactRequest(contactId);
-    alert(msg);
-    document.getElementById('contactIdSidebar').value = '';
-    loadSidebarContacts();
-  } catch (err) {
-    alert(err.message);
-  }
+  const msg = await sendContactRequest(contactId);
+  alert(msg);
+  document.getElementById('contactIdSidebar').value = '';
+  loadSidebarContacts();
 });
 
 window.approveRequest = async (id) => {
@@ -249,25 +250,18 @@ window.cancelRequest = async (id) => {
   socket.emit('contact update');
 };
 
-window.toggleSidebar = () => {
+document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
   document.getElementById('contactsSidebar').classList.toggle('hidden');
-};
+});
 
-// ✅ Load contacts into sidebar sections
 async function loadSidebarContacts() {
-  const response = await fetchAllContacts();
-  const contacts = Array.isArray(response) ? response : response.contacts;
-
-  if (!Array.isArray(contacts)) {
-    console.error('❌ Expected contacts to be an array:', contacts);
-    return;
-  }
+  const contacts = await fetchAllContacts();
 
   ['pendingListSidebar', 'receivedListSidebar', 'approvedListSidebar'].forEach(id =>
     document.getElementById(id).innerHTML = ''
   );
 
-  contacts.forEach(contact => {
+  (contacts || []).forEach(contact => {
     const li = document.createElement('li');
     li.textContent = contact.userId;
 

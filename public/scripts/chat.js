@@ -54,9 +54,13 @@ socket.on('chat message', (msg) => {
   addMessage(msg);
 
   if (msg.user !== username) {
-    socket.emit('message delivered', msg._id);
-    if (isAtBottom()) socket.emit('message seen', msg._id);
+  socket.emit('message delivered', msg._id);
+
+  // ✅ Only mark as seen if viewing this chat
+  if (selectedContact === msg.user && isAtBottom()) {
+    socket.emit('message seen', msg._id);
   }
+}
 
   scrollToBottom();
 });

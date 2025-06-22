@@ -94,12 +94,15 @@ function scrollToBottom(force = false) {
   }
 }
 
+//✅ Add Messages 
 function addMessage(msg) {
-  if ((msg.user !== username && msg.user !== selectedContact) || 
-      (msg.user === username && msg.to !== selectedContact)) return;
+  const isFromMe = msg.user === username;
+  const isToMe = msg.to === username;
+  const isRelevant = (isFromMe && msg.to === selectedContact) || (isToMe && msg.user === selectedContact);
+  if (!isRelevant) return;
 
   const item = document.createElement('li');
-  const isSelf = msg.user === username;
+  const isSelf = isFromMe;
 
   item.classList.add(isSelf ? 'message-sent' : 'message-received');
   item.dataset.id = msg._id;

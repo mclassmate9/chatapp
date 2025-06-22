@@ -117,8 +117,12 @@ app.get('/api/user', (req, res) => {
 });
 
 // ✅ Online tracking
-const onlineUsers = new Set();
+// ✅ Attach session middleware to Socket.IO first
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, {}, next);
+});
 
+// ✅ Then check authentication
 io.use((socket, next) => {
   const session = socket.request.session;
   if (session?.username) {
@@ -127,6 +131,9 @@ io.use((socket, next) => {
   next(new Error('not-authenticated'));
 });
 
+// ✅ Online tracking
+const onlineUsers = new Set();
+
 io.on('connection', async (socket) => {
   const session = socket.request.session;
   const username = session.username;
@@ -134,6 +141,9 @@ io.on('connection', async (socket) => {
   console.log(`${username} connected`);
   onlineUsers.add(username);
   socket.broadcast.emit('user-online', username);
+
+  // continue...
+});
 
   // ✅ Send chat history
   const messages = await Message.find({

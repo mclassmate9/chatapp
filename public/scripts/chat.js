@@ -1,3 +1,4 @@
+// chat.js
 import {
   fetchCurrentUser,
   fetchAllContacts,
@@ -22,11 +23,10 @@ const loadingOverlay = document.getElementById('loadingOverlay');
 const contactSelector = document.getElementById('contactSelector');
 const newContactId = document.getElementById('newContactId');
 const addContactBtn = document.getElementById('addContactBtn');
-const notificationSound = new Audio('/pop.mp3');
 
 // ✅ Socket Events
 socket.on('connect', () => {
-  console.log('✅ Socket connected');
+  console.log('✅ Connected');
   loadingOverlay.classList.add('hidden');
 });
 
@@ -55,11 +55,7 @@ socket.on('chat message', (msg) => {
 
   if (msg.user !== username) {
     socket.emit('message delivered', msg._id);
-    const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 150;
-    if (isAtBottom) {
-      socket.emit('message seen', msg._id);
-    }
-    notificationSound.play().catch(err => console.warn('🔇 Sound play blocked:', err));
+    if (isAtBottom()) socket.emit('message seen', msg._id);
   }
 
   scrollToBottom();
@@ -99,13 +95,11 @@ function scrollToBottom(force = false) {
 }
 
 function addMessage(msg) {
-  const isFromMe = msg.user === username;
-  const isToMe = msg.to === username;
-  const isRelevant = (isFromMe && msg.to === selectedContact) || (isToMe && msg.user === selectedContact);
-  if (!isRelevant) return;
+  if ((msg.user !== username && msg.user !== selectedContact) || 
+      (msg.user === username && msg.to !== selectedContact)) return;
 
   const item = document.createElement('li');
-  const isSelf = isFromMe;
+  const isSelf = msg.user === username;
 
   item.classList.add(isSelf ? 'message-sent' : 'message-received');
   item.dataset.id = msg._id;
@@ -149,21 +143,13 @@ inputField.addEventListener('input', () => socket.emit('typing'));
 newMessageBadge.addEventListener('click', () => scrollToBottom(true));
 
 messagesList.addEventListener('scroll', () => {
-  const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100;
-  if (isAtBottom) newMessageBadge.style.display = 'none';
+  if (isAtBottom()) newMessageBadge.style.display = 'none';
 
-  const messageItems = messagesList.querySelectorAll('li');
-  messageItems.forEach(item => {
+  messagesList.querySelectorAll('li').forEach(item => {
     const rect = item.getBoundingClientRect();
     const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-    const sender = item.dataset.sender;
 
-    if (
-      visible &&
-      item.dataset.id &&
-      sender !== username &&
-      sender === selectedContact
-    ) {
+    if (visible && item.dataset.id && item.dataset.sender !== username) {
       socket.emit('message seen', item.dataset.id);
     }
   });
@@ -176,43 +162,27 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 });
 
 // ✅ Load Current User
-fetch('/api/user', { credentials: 'include' })
-  .then(res => {
-    if (!res.ok) throw new Error('Not authenticated');
-    return res.json();
-  })
-  .then(user => {
-    username = user.username;
-    chatUsername.textContent = `Chat with ${username}`;
-    statusDot.classList.replace('offline', 'online');
-    statusDot.textContent = 'Online';
-    socket.connect();
-    loadingOverlay.classList.add('hidden');
-  })
-  .catch(() => {
-    window.location.href = '/login.html';
-  });
+fetchCurrentUser().then(user => {
+  username = user.username;
+  chatUsername.textContent = `Chat with ${username}`;
+  statusDot.classList.replace('offline', 'online');
+  statusDot.textContent = 'Online';
+  socket.connect();
+  loadingOverlay.classList.add('hidden');
+}).catch(() => {
+  window.location.href = '/login.html';
+});
 
 // ✅ Load Approved Contacts
-fetch('/contacts/list', { credentials: 'include' })
+fetch('/user/approved')
   .then(res => res.json())
-  .then(data => {
-    const contacts = data.contacts || [];
-    console.log('📩 Approved contacts loaded:', contacts);
-
+  .then(contacts => {
     contacts.forEach(contact => {
       const option = document.createElement('option');
       option.value = contact;
       option.textContent = contact;
       contactSelector.appendChild(option);
     });
-
-    // ✅ Auto-select first contact if any
-    if (contacts.length > 0) {
-      selectedContact = contacts[0];
-      contactSelector.value = selectedContact;
-      chatUsername.textContent = `Chat with ${selectedContact}`;
-    }
 
     contactSelector.addEventListener('change', () => {
       selectedContact = contactSelector.value;
@@ -262,11 +232,12 @@ document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
 
 async function loadSidebarContacts() {
   const contacts = await fetchAllContacts();
+
   ['pendingListSidebar', 'receivedListSidebar', 'approvedListSidebar'].forEach(id =>
     document.getElementById(id).innerHTML = ''
   );
 
-  (contacts || []).forEach(contact => {
+  contacts.forEach(contact => {
     const li = document.createElement('li');
     li.textContent = contact.userId;
 

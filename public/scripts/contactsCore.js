@@ -8,15 +8,19 @@ export async function fetchCurrentUser() {
 // ✅ Get all contact statuses (pending, received, approved)
 export async function fetchAllContacts() {
   const res = await fetch('/contacts/list');
-  if (!res.ok) throw new Error('Failed to fetch contacts');
   const data = await res.json();
 
-  // Ensure consistent format
-  return Array.isArray(data.contacts)
-  ? data.contacts
-  : Array.isArray(data)
-  ? data
-  : [];
+  if (!res.ok) {
+    console.error("Failed to fetch contacts:", data);
+    return [];
+  }
+
+  if (!Array.isArray(data.contacts)) {
+    console.warn("Unexpected contacts format:", data);
+    return [];
+  }
+
+  return data.contacts;
 }
 
 // ✅ Send contact request

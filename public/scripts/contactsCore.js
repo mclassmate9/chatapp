@@ -7,16 +7,16 @@ export async function fetchCurrentUser() {
 }
 
 export async function fetchAllContacts() {
-  const res = await fetch('/contacts'); // ✅ changed
+  const res = await fetch('/contacts/list'); // ✅ changed
   if (!res.ok) throw new Error('Failed to fetch contacts');
   return res.json();
 }
 
 export async function sendContactRequest(contactId) {
-  const res = await fetch('/contacts', { // ✅ changed
+  const res = await fetch('/contacts/request', { // ✅ changed
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contactId }),
+    body: JSON.stringify({ to: contactId }),
   });
 
   const text = await res.text();
@@ -25,10 +25,10 @@ export async function sendContactRequest(contactId) {
 }
 
 export async function approveContact(contactId) {
-  const res = await fetch('/contacts/approve', { // ✅ changed
+  const res = await fetch('/contacts/accept', { // ✅ changed
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contactId }),
+    body: JSON.stringify({ from: contactId }),
   });
 
   if (!res.ok) {
@@ -38,10 +38,10 @@ export async function approveContact(contactId) {
 }
 
 export async function cancelContact(contactId) {
-  const res = await fetch('/contacts/cancel', { // ✅ changed
+  const res = await fetch('/contacts/reject', { // ✅ changed
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contactId }),
+    body: JSON.stringify({ from: contactId }),
   });
 
   if (!res.ok) {

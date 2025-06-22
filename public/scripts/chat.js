@@ -23,6 +23,7 @@ const loadingOverlay = document.getElementById('loadingOverlay');
 const contactSelector = document.getElementById('contactSelector');
 const newContactId = document.getElementById('newContactId');
 const addContactBtn = document.getElementById('addContactBtn');
+const notificationSound = new Audio('/pop.mp3');
 
 // ✅ Socket Events
 socket.on('connect', () => {

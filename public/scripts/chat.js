@@ -189,7 +189,7 @@ fetchCurrentUser().then(user => {
 });
 
 // ✅ Load Approved Contacts
-fetch('/user/approved')
+fetch('/contacts/approved')
   .then(res => res.json())
   .then(contacts => {
     contacts.forEach(contact => {

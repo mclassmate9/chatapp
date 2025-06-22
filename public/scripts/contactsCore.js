@@ -1,63 +1,51 @@
-// ✅ Get current logged-in user
+// contactsCore.js
+
 export async function fetchCurrentUser() {
   const res = await fetch('/api/user');
-  if (!res.ok) throw new Error('User not logged in');
+  if (!res.ok) throw new Error('User not authenticated');
   return res.json();
 }
 
-// ✅ Get all contact statuses (pending, received, approved)
 export async function fetchAllContacts() {
-  const res = await fetch('/contacts/list');
-  const data = await res.json();
+  const res = await fetch('/user/contacts');
+  if (!res.ok) throw new Error('Failed to fetch contacts');
+  return res.json();
+}
+
+export async function sendContactRequest(contactId) {
+  const res = await fetch('/user/contacts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contactId }),
+  });
+
+  const text = await res.text();
+  if (!res.ok) throw new Error(text);
+  return text;
+}
+
+export async function approveContact(contactId) {
+  const res = await fetch('/user/contacts/approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contactId }),
+  });
 
   if (!res.ok) {
-    console.error("Failed to fetch contacts:", data);
-    return [];
+    const text = await res.text();
+    throw new Error(text || 'Failed to approve contact');
   }
-
-  if (!Array.isArray(data.contacts)) {
-    console.warn("Unexpected contacts format:", data);
-    return [];
-  }
-
-  return data.contacts;
 }
 
-// ✅ Send contact request
-export async function sendContactRequest(contactId) {
-  const res = await fetch('/contacts/request', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contactId })
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Failed to send request');
-  return data.message || 'Request sent';
-}
-
-// ✅ Approve received request
-export async function approveContact(contactId) {
-  const res = await fetch('/contacts/accept', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contactId })
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Failed to approve');
-  return data.message || 'Approved successfully';
-}
-
-// ✅ Cancel a request (pending or reject received)
 export async function cancelContact(contactId) {
-  const res = await fetch('/contacts/reject', {
+  const res = await fetch('/user/contacts/cancel', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contactId })
+    body: JSON.stringify({ contactId }),
   });
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Failed to reject');
-  return data.message || 'Rejected successfully';
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || 'Failed to cancel contact');
+  }
 }

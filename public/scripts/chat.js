@@ -1,3 +1,4 @@
+console.log('🚀 chat.js loaded and running');
 // chat.js
 import {
   fetchCurrentUser,

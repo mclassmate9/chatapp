@@ -53,7 +53,7 @@ app.get('/', (req, res) => res.redirect('/register.html'));
 
 // ✅ Route setup
 app.use('/auth', authRoutes);
-app.use('/user', userRoutes);
+
 app.use('/protect', protectRoutes);
 app.use('/contacts', contactRoutes);
 

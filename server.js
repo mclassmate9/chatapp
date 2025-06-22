@@ -101,9 +101,17 @@ app.post('/login', async (req, res) => {
     }
 
     req.session.username = user.userId;
-    req.session.cookie.maxAge = remember ? 1000 * 60 * 60 * 24 * 30 : null;
+req.session.cookie.maxAge = remember ? 1000 * 60 * 60 * 24 * 30 : null;
 
-    res.redirect('/protected/chat.html');
+console.log('✅ Session created at login:', req.session);
+
+req.session.save((err) => {
+  if (err) {
+    console.error('❌ Session save error:', err);
+    return res.status(500).send('<h3>Session error. <a href="/login.html">Try again</a></h3>');
+  }
+  res.redirect('/protected/chat.html');
+});
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).send('<h3>Server error. <a href="/login.html">Try again</a></h3>');

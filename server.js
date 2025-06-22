@@ -153,6 +153,7 @@ io.on('connection', async (socket) => {
 
     const newMsg = new Message({ user: username, to, text, status: 'sent' });
     await newMsg.save();
+console.log('💬 New message saved:', newMsg);
 
     for (let [id, sock] of io.sockets.sockets) {
       const s = sock.request.session;

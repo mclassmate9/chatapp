@@ -143,6 +143,7 @@ io.use((socket, next) => {
 // ✅ Socket.IO handlers
 io.on('connection', async (socket) => {
   const session = socket.request.session;
+console.log('🟢 Session on socket connection:', session);
   const username = session.username;
 
   console.log(`${username} connected`);

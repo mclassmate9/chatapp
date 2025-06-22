@@ -6,46 +6,61 @@ export async function fetchCurrentUser() {
   return res.json();
 }
 
+// ✅ Unified safe fetch helper
+async function safeJson(res) {
+  const contentType = res.headers.get('content-type');
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  if (contentType && contentType.includes('application/json')) {
+    return res.json();
+  }
+  throw new Error('Invalid JSON response');
+}
+
+// ✅ Fetch all contact data (pending, received, approved)
 export async function fetchAllContacts() {
-  const res = await fetch('/contacts/list'); // ✅ changed
-  if (!res.ok) throw new Error('Failed to fetch contacts');
-  return res.json();
+  const res = await fetch('/contacts/list');
+  const data = await safeJson(res);
+
+  // Ensures we return a flat array of contacts
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.contacts)) return data.contacts;
+
+  // Handle legacy formats or fallback
+  return [];
 }
 
-export async function sendContactRequest(contactId) {
-  const res = await fetch('/contacts/request', { // ✅ changed
+// ✅ Send contact request
+export async function sendContactRequest(targetUserId) {
+  const res = await fetch('/contacts/request', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ to: contactId }),
+    body: JSON.stringify({ to: targetUserId })
   });
 
-  const text = await res.text();
-  if (!res.ok) throw new Error(text);
-  return text;
+  const data = await safeJson(res);
+  return data.message || 'Request sent';
 }
 
-export async function approveContact(contactId) {
-  const res = await fetch('/contacts/accept', { // ✅ changed
+// ✅ Approve contact request
+export async function approveContact(fromUserId) {
+  const res = await fetch('/contacts/accept', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: contactId }),
+    body: JSON.stringify({ from: fromUserId })
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || 'Failed to approve contact');
-  }
+  const data = await safeJson(res);
+  return data.message || 'Contact approved';
 }
 
-export async function cancelContact(contactId) {
-  const res = await fetch('/contacts/reject', { // ✅ changed
+// ✅ Cancel pending or received request
+export async function cancelContact(targetUserId) {
+  const res = await fetch('/contacts/reject', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: contactId }),
+    body: JSON.stringify({ target: targetUserId })
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || 'Failed to cancel contact');
-  }
+  const data = await safeJson(res);
+  return data.message || 'Request canceled';
 }

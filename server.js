@@ -35,21 +35,14 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-  cookie: {
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-    httpOnly: true,
-    sameSite: 'lax'
-  }
+  cookie: { maxAge: null }
 });
 
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 app.use(sessionMiddleware);
 
 // ✅ Share session with Socket.IO
-io.use((socket, next) => {
-  sessionMiddleware(socket.request, {}, next);
-});
+io.engine.use(sessionMiddleware);
 
 // ✅ Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -101,17 +94,9 @@ app.post('/login', async (req, res) => {
     }
 
     req.session.username = user.userId;
-req.session.cookie.maxAge = remember ? 1000 * 60 * 60 * 24 * 30 : null;
+    req.session.cookie.maxAge = remember ? 1000 * 60 * 60 * 24 * 30 : null;
 
-console.log('✅ Session created at login:', req.session);
-
-req.session.save((err) => {
-  if (err) {
-    console.error('❌ Session save error:', err);
-    return res.status(500).send('<h3>Session error. <a href="/login.html">Try again</a></h3>');
-  }
-  res.redirect('/protected/chat.html');
-});
+    res.redirect('/protected/chat.html');
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).send('<h3>Server error. <a href="/login.html">Try again</a></h3>');
@@ -134,12 +119,6 @@ app.get('/api/user', (req, res) => {
 // ✅ Online tracking
 const onlineUsers = new Set();
 
-// ✅ Attach session middleware to Socket.IO
-io.use((socket, next) => {
-  sessionMiddleware(socket.request, {}, next);
-});
-
-// ✅ Check authentication
 io.use((socket, next) => {
   const session = socket.request.session;
   if (session?.username) {
@@ -148,10 +127,8 @@ io.use((socket, next) => {
   next(new Error('not-authenticated'));
 });
 
-// ✅ Socket.IO handlers
 io.on('connection', async (socket) => {
   const session = socket.request.session;
-console.log('🟢 Session on socket connection:', session);
   const username = session.username;
 
   console.log(`${username} connected`);
@@ -176,7 +153,6 @@ console.log('🟢 Session on socket connection:', session);
 
     const newMsg = new Message({ user: username, to, text, status: 'sent' });
     await newMsg.save();
-    console.log('💬 New message saved:', newMsg);
 
     for (let [id, sock] of io.sockets.sockets) {
       const s = sock.request.session;
@@ -237,12 +213,6 @@ console.log('🟢 Session on socket connection:', session);
     onlineUsers.delete(username);
     socket.broadcast.emit('user-offline', username);
   });
-});
-
-// ✅ Catch-all 404 handler for unknown routes
-app.use((req, res, next) => {
-  console.warn(`⚠️ 404 Not Found: ${req.method} ${req.originalUrl}`);
-  res.status(404).send('404 Not Found');
 });
 
 // ✅ Error handler

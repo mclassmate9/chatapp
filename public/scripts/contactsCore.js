@@ -12,7 +12,11 @@ export async function fetchAllContacts() {
   const data = await res.json();
 
   // Ensure consistent format
-  return Array.isArray(data.contacts) ? data.contacts : data;
+  return Array.isArray(data.contacts)
+  ? data.contacts
+  : Array.isArray(data)
+  ? data
+  : [];
 }
 
 // ✅ Send contact request

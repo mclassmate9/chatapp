@@ -224,6 +224,12 @@ io.on('connection', async (socket) => {
   });
 });
 
+// ✅ Catch-all 404 handler for unknown routes
+app.use((req, res, next) => {
+  console.warn(`⚠️ 404 Not Found: ${req.method} ${req.originalUrl}`);
+  res.status(404).send('404 Not Found');
+});
+
 // ✅ Error handler
 app.use((err, req, res, next) => {
   console.error("Server Error:", err.stack);

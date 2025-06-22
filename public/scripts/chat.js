@@ -150,13 +150,21 @@ inputField.addEventListener('input', () => socket.emit('typing'));
 newMessageBadge.addEventListener('click', () => scrollToBottom(true));
 
 messagesList.addEventListener('scroll', () => {
-  if (isAtBottom()) newMessageBadge.style.display = 'none';
+  const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100;
+  if (isAtBottom) newMessageBadge.style.display = 'none';
 
-  messagesList.querySelectorAll('li').forEach(item => {
+  const messageItems = messagesList.querySelectorAll('li');
+  messageItems.forEach(item => {
     const rect = item.getBoundingClientRect();
     const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+    const sender = item.dataset.sender;
 
-    if (visible && item.dataset.id && item.dataset.sender !== username) {
+    if (
+      visible &&
+      item.dataset.id &&
+      sender !== username &&
+      sender === selectedContact
+    ) {
       socket.emit('message seen', item.dataset.id);
     }
   });

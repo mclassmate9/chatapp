@@ -1,4 +1,3 @@
-console.log('🚀 chat.js loaded and running');
 // chat.js
 import {
   fetchCurrentUser,
@@ -9,8 +8,6 @@ import {
 } from './contactsCore.js';
 
 const socket = io({ autoConnect: false, withCredentials: true });
-
-console.log('🎯 Attempting socket connection...');
 
 let username = '';
 let selectedContact = null;
@@ -28,7 +25,7 @@ const newContactId = document.getElementById('newContactId');
 const addContactBtn = document.getElementById('addContactBtn');
 const notificationSound = new Audio('/pop.mp3');
 
-// ✅ SOCKET EVENTS
+// ✅ Socket Events
 socket.on('connect', () => {
   console.log('✅ Connected');
   loadingOverlay.classList.add('hidden');
@@ -59,12 +56,13 @@ socket.on('chat message', (msg) => {
 
   if (msg.user !== username) {
     socket.emit('message delivered', msg._id);
-    if (isAtBottom()) {
+    const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 150;
+
+    if (isAtBottom) {
       socket.emit('message seen', msg._id);
     }
 
-    // ✅ Play incoming sound
-    notificationSound.play().catch(err => console.warn('🔇 Sound blocked:', err));
+    notificationSound.play().catch(err => console.warn('🔇 Sound play blocked:', err));
   }
 
   scrollToBottom();
@@ -89,7 +87,7 @@ socket.on('contact update', () => {
   loadSidebarContacts();
 });
 
-// ✅ HELPERS
+// ✅ Helper Functions
 function isAtBottom() {
   return messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 150;
 }
@@ -110,12 +108,14 @@ function addMessage(msg) {
   if (!isRelevant) return;
 
   const item = document.createElement('li');
-  item.classList.add(isFromMe ? 'message-sent' : 'message-received');
+  const isSelf = isFromMe;
+
+  item.classList.add(isSelf ? 'message-sent' : 'message-received');
   item.dataset.id = msg._id;
   item.dataset.sender = msg.user;
-  item.textContent = isFromMe ? msg.text : `${msg.user}: ${msg.text}`;
+  item.textContent = isSelf ? msg.text : `${msg.user}: ${msg.text}`;
 
-  if (isFromMe) {
+  if (isSelf) {
     const statusSpan = document.createElement('span');
     statusSpan.className = 'status-badge';
     statusSpan.textContent = msg.status === 'seen' ? '✓✓ Seen' :
@@ -135,7 +135,7 @@ function addMessage(msg) {
   messagesList.appendChild(item);
 }
 
-// ✅ DOM EVENTS
+// ✅ DOM Events
 document.getElementById('form').addEventListener('submit', (e) => {
   e.preventDefault();
   const text = inputField.value.trim();
@@ -152,10 +152,11 @@ inputField.addEventListener('input', () => socket.emit('typing'));
 newMessageBadge.addEventListener('click', () => scrollToBottom(true));
 
 messagesList.addEventListener('scroll', () => {
-  const atBottom = isAtBottom();
-  if (atBottom) newMessageBadge.style.display = 'none';
+  const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100;
+  if (isAtBottom) newMessageBadge.style.display = 'none';
 
-  messagesList.querySelectorAll('li').forEach(item => {
+  const messageItems = messagesList.querySelectorAll('li');
+  messageItems.forEach(item => {
     const rect = item.getBoundingClientRect();
     const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
     const sender = item.dataset.sender;
@@ -178,25 +179,23 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 });
 
 // ✅ Load Current User
-fetchCurrentUser()
-  .then(user => {
-    username = user.username;
-    chatUsername.textContent = `Chat with ${username}`;
-    statusDot.classList.replace('offline', 'online');
-    statusDot.textContent = 'Online';
-    socket.connect();
-    loadingOverlay.classList.add('hidden');
-  })
-  .catch(() => {
-    window.location.href = '/login.html';
-  });
+fetchCurrentUser().then(user => {
+  username = user.username;
+  chatUsername.textContent = `Chat with ${username}`;
+  statusDot.classList.replace('offline', 'online');
+  statusDot.textContent = 'Online';
+  socket.connect();
+  loadingOverlay.classList.add('hidden');
+}).catch(() => {
+  window.location.href = '/login.html';
+});
 
-// ✅ Load Approved Contacts (with fix)
+// ✅ Load Approved Contacts
 fetch('/contacts/list')
   .then(res => res.json())
   .then(data => {
-    console.log('Approved contacts response:', data);
-    const contacts = Array.isArray(data.contacts) ? data.contacts : [];
+    const contacts = Array.isArray(data) ? data : data.contacts || [];
+    contactSelector.innerHTML = '';
 
     contacts.forEach(contact => {
       const option = document.createElement('option');
@@ -214,7 +213,7 @@ fetch('/contacts/list')
     console.error('Failed to load approved contacts:', err);
   });
 
-// ✅ Mini Add Contact
+// ✅ Add Contact via mini input
 addContactBtn.addEventListener('click', () => {
   const contactId = newContactId.value.trim();
   if (!contactId) return;
@@ -228,7 +227,7 @@ addContactBtn.addEventListener('click', () => {
     .catch(err => alert(err.message));
 });
 
-// ✅ Sidebar Contact Form
+// ✅ Contact Sidebar
 document.getElementById('addContactFormSidebar').addEventListener('submit', async (e) => {
   e.preventDefault();
   const contactId = document.getElementById('contactIdSidebar').value.trim();
@@ -240,7 +239,6 @@ document.getElementById('addContactFormSidebar').addEventListener('submit', asyn
   loadSidebarContacts();
 });
 
-// ✅ Sidebar actions
 window.approveRequest = async (id) => {
   await approveContact(id);
   socket.emit('contact update');
@@ -255,28 +253,33 @@ document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
   document.getElementById('contactsSidebar').classList.toggle('hidden');
 });
 
-// ✅ Load all contacts into sidebar
+// ✅ Load Sidebar Contacts
 async function loadSidebarContacts() {
-  const contacts = await fetchAllContacts();
+  try {
+    const result = await fetchAllContacts();
+    const contacts = Array.isArray(result) ? result : result.contacts || [];
 
-  ['pendingListSidebar', 'receivedListSidebar', 'approvedListSidebar'].forEach(id =>
-    document.getElementById(id).innerHTML = ''
-  );
+    ['pendingListSidebar', 'receivedListSidebar', 'approvedListSidebar'].forEach(id =>
+      document.getElementById(id).innerHTML = ''
+    );
 
-  contacts.forEach(contact => {
-    const li = document.createElement('li');
-    li.textContent = contact.userId;
+    contacts.forEach(contact => {
+      const li = document.createElement('li');
+      li.textContent = contact.userId;
 
-    if (contact.status === 'pending') {
-      li.innerHTML += ` <button onclick="cancelRequest('${contact.userId}')">Cancel</button>`;
-      document.getElementById('pendingListSidebar').appendChild(li);
-    } else if (contact.status === 'received') {
-      li.innerHTML += ` <button onclick="approveRequest('${contact.userId}')">Approve</button>`;
-      document.getElementById('receivedListSidebar').appendChild(li);
-    } else if (contact.status === 'approved') {
-      document.getElementById('approvedListSidebar').appendChild(li);
-    }
-  });
+      if (contact.status === 'pending') {
+        li.innerHTML += ` <button onclick="cancelRequest('${contact.userId}')">Cancel</button>`;
+        document.getElementById('pendingListSidebar').appendChild(li);
+      } else if (contact.status === 'received') {
+        li.innerHTML += ` <button onclick="approveRequest('${contact.userId}')">Approve</button>`;
+        document.getElementById('receivedListSidebar').appendChild(li);
+      } else if (contact.status === 'approved') {
+        document.getElementById('approvedListSidebar').appendChild(li);
+      }
+    });
+  } catch (err) {
+    console.error('❌ Failed to load sidebar contacts:', err);
+  }
 }
 
 loadSidebarContacts();

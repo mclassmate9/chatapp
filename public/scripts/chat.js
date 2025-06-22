@@ -25,7 +25,7 @@ const newContactId = document.getElementById('newContactId');
 const addContactBtn = document.getElementById('addContactBtn');
 const notificationSound = new Audio('/pop.mp3');
 
-// ✅ Socket Events
+// ✅ SOCKET EVENTS
 socket.on('connect', () => {
   console.log('✅ Connected');
   loadingOverlay.classList.add('hidden');
@@ -56,16 +56,13 @@ socket.on('chat message', (msg) => {
 
   if (msg.user !== username) {
     socket.emit('message delivered', msg._id);
-    const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 150;
-
-    if (isAtBottom) {
+    if (isAtBottom()) {
       socket.emit('message seen', msg._id);
     }
 
-    // ✅ Play sound for incoming messages
-    notificationSound.play().catch(err => console.warn('🔇 Sound play blocked:', err));
+    // ✅ Play incoming sound
+    notificationSound.play().catch(err => console.warn('🔇 Sound blocked:', err));
   }
-
 
   scrollToBottom();
 });
@@ -89,7 +86,7 @@ socket.on('contact update', () => {
   loadSidebarContacts();
 });
 
-// ✅ Helper Functions
+// ✅ HELPERS
 function isAtBottom() {
   return messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 150;
 }
@@ -103,7 +100,6 @@ function scrollToBottom(force = false) {
   }
 }
 
-//✅ Add Messages 
 function addMessage(msg) {
   const isFromMe = msg.user === username;
   const isToMe = msg.to === username;
@@ -111,14 +107,12 @@ function addMessage(msg) {
   if (!isRelevant) return;
 
   const item = document.createElement('li');
-  const isSelf = isFromMe;
-
-  item.classList.add(isSelf ? 'message-sent' : 'message-received');
+  item.classList.add(isFromMe ? 'message-sent' : 'message-received');
   item.dataset.id = msg._id;
   item.dataset.sender = msg.user;
-  item.textContent = isSelf ? msg.text : `${msg.user}: ${msg.text}`;
+  item.textContent = isFromMe ? msg.text : `${msg.user}: ${msg.text}`;
 
-  if (isSelf) {
+  if (isFromMe) {
     const statusSpan = document.createElement('span');
     statusSpan.className = 'status-badge';
     statusSpan.textContent = msg.status === 'seen' ? '✓✓ Seen' :
@@ -138,7 +132,7 @@ function addMessage(msg) {
   messagesList.appendChild(item);
 }
 
-// ✅ DOM Events
+// ✅ DOM EVENTS
 document.getElementById('form').addEventListener('submit', (e) => {
   e.preventDefault();
   const text = inputField.value.trim();
@@ -155,11 +149,10 @@ inputField.addEventListener('input', () => socket.emit('typing'));
 newMessageBadge.addEventListener('click', () => scrollToBottom(true));
 
 messagesList.addEventListener('scroll', () => {
-  const isAtBottom = messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 100;
-  if (isAtBottom) newMessageBadge.style.display = 'none';
+  const atBottom = isAtBottom();
+  if (atBottom) newMessageBadge.style.display = 'none';
 
-  const messageItems = messagesList.querySelectorAll('li');
-  messageItems.forEach(item => {
+  messagesList.querySelectorAll('li').forEach(item => {
     const rect = item.getBoundingClientRect();
     const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
     const sender = item.dataset.sender;
@@ -182,23 +175,26 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 });
 
 // ✅ Load Current User
-fetchCurrentUser().then(user => {
-  username = user.username;
-  chatUsername.textContent = `Chat with ${username}`;
-  statusDot.classList.replace('offline', 'online');
-  statusDot.textContent = 'Online';
-  socket.connect();
-  loadingOverlay.classList.add('hidden');
-}).catch(() => {
-  window.location.href = '/login.html';
-});
+fetchCurrentUser()
+  .then(user => {
+    username = user.username;
+    chatUsername.textContent = `Chat with ${username}`;
+    statusDot.classList.replace('offline', 'online');
+    statusDot.textContent = 'Online';
+    socket.connect();
+    loadingOverlay.classList.add('hidden');
+  })
+  .catch(() => {
+    window.location.href = '/login.html';
+  });
 
-// ✅ Load Approved Contacts
-
+// ✅ Load Approved Contacts (with fix)
 fetch('/contacts/list')
   .then(res => res.json())
   .then(data => {
-    const contacts = data.contacts; // correct structure
+    console.log('Approved contacts response:', data);
+    const contacts = Array.isArray(data.contacts) ? data.contacts : [];
+
     contacts.forEach(contact => {
       const option = document.createElement('option');
       option.value = contact;
@@ -214,7 +210,8 @@ fetch('/contacts/list')
   .catch(err => {
     console.error('Failed to load approved contacts:', err);
   });
-// ✅ Add Contact via mini input
+
+// ✅ Mini Add Contact
 addContactBtn.addEventListener('click', () => {
   const contactId = newContactId.value.trim();
   if (!contactId) return;
@@ -228,7 +225,7 @@ addContactBtn.addEventListener('click', () => {
     .catch(err => alert(err.message));
 });
 
-// ✅ Contact Sidebar
+// ✅ Sidebar Contact Form
 document.getElementById('addContactFormSidebar').addEventListener('submit', async (e) => {
   e.preventDefault();
   const contactId = document.getElementById('contactIdSidebar').value.trim();
@@ -240,6 +237,7 @@ document.getElementById('addContactFormSidebar').addEventListener('submit', asyn
   loadSidebarContacts();
 });
 
+// ✅ Sidebar actions
 window.approveRequest = async (id) => {
   await approveContact(id);
   socket.emit('contact update');
@@ -254,6 +252,7 @@ document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
   document.getElementById('contactsSidebar').classList.toggle('hidden');
 });
 
+// ✅ Load all contacts into sidebar
 async function loadSidebarContacts() {
   const contacts = await fetchAllContacts();
 

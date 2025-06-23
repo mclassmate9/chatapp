@@ -105,7 +105,19 @@ function addMessage(msg) {
   item.dataset.id = msg._id;
   item.dataset.sender = msg.user;
   
+const initials = msg.user.charAt(0).toUpperCase();
 
+item.innerHTML = `
+  <div class="avatar">${initials}</div>
+  <div class="bubble">
+    ${isSelf ? msg.text : `<strong>${msg.user}:</strong> ${msg.text}`}
+    ${isSelf && msg.status ? `<span class="status-badge">${
+      msg.status === 'sent' ? '✓' :
+      msg.status === 'delivered' ? '✓✓' :
+      msg.status === 'seen' ? '✓✓ Seen' : ''
+    }</span>` : ''}
+  </div>
+`;
 
     const delBtn = document.createElement('button');
     delBtn.textContent = '🗑️';

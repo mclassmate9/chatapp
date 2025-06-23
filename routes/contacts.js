@@ -152,4 +152,25 @@ router.get('/pending', async (req, res) => {
   }
 });
 
+// ✅ Get full contact list with status and who sent it
+router.get('/full', async (req, res) => {
+  const username = req.session.username;
+  if (!username) return res.status(403).json({ message: 'Unauthorized' });
+
+  try {
+    const user = await User.findOne({ userId: username });
+
+    const fullContacts = user.contacts.map(contact => ({
+      userId: contact.userId,
+      status: contact.status,
+      sentBy: contact.status === 'pending' && contact.userId !== username ? contact.userId : username
+    }));
+
+    res.json({ contacts: fullContacts });
+  } catch (err) {
+    console.error('Full contact list error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

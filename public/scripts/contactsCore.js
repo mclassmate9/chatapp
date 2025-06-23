@@ -13,7 +13,7 @@ export async function fetchAllContacts() {
 }
 
 export async function sendContactRequest(contactId) {
-  const res = await fetch('/contacts/list', {
+  const res = await fetch('/contacts/request', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ contactId }),

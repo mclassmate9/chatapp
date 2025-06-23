@@ -240,11 +240,22 @@ document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
 });
 
 async function loadSidebarContacts() {
-  const contacts = await fetchAllContacts();
+  const res = await fetch('/user/contacts');
+  const data = await res.json();
+  const contacts = data.contacts || data; // support both formats
 
-  ['pendingListSidebar', 'receivedListSidebar', 'approvedListSidebar'].forEach(id =>
-    document.getElementById(id).innerHTML = ''
-  );
+  if (!Array.isArray(contacts)) {
+    console.error('Expected contacts array, got:', contacts);
+    return;
+  }
+
+  const pendingList = document.getElementById('pendingListSidebar');
+  const receivedList = document.getElementById('receivedListSidebar');
+  const approvedList = document.getElementById('approvedListSidebar');
+
+  pendingList.innerHTML = '';
+  receivedList.innerHTML = '';
+  approvedList.innerHTML = '';
 
   contacts.forEach(contact => {
     const li = document.createElement('li');
@@ -252,12 +263,12 @@ async function loadSidebarContacts() {
 
     if (contact.status === 'pending') {
       li.innerHTML += ` <button onclick="cancelRequest('${contact.userId}')">Cancel</button>`;
-      document.getElementById('pendingListSidebar').appendChild(li);
+      pendingList.appendChild(li);
     } else if (contact.status === 'received') {
       li.innerHTML += ` <button onclick="approveRequest('${contact.userId}')">Approve</button>`;
-      document.getElementById('receivedListSidebar').appendChild(li);
+      receivedList.appendChild(li);
     } else if (contact.status === 'approved') {
-      document.getElementById('approvedListSidebar').appendChild(li);
+      approvedList.appendChild(li);
     }
   });
 }

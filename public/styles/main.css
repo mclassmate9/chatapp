@@ -153,6 +153,7 @@
       max-width: 70%;
       word-wrap: break-word;
       animation: fadeIn 0.3s ease-in-out;
+      transition: all 0.3s ease;
       position: relative;
     }
 

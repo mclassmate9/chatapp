@@ -240,7 +240,7 @@ document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
 });
 
 async function loadSidebarContacts() {
-  const res = await fetch('/user/contacts');
+  const res = await fetch('/contacts/list');
   const data = await res.json();
   const contacts = data.contacts || data; // support both formats
 

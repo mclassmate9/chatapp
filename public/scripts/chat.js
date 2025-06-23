@@ -104,7 +104,15 @@ function addMessage(msg) {
   item.classList.add(isSelf ? 'message-sent' : 'message-received');
   item.dataset.id = msg._id;
   item.dataset.sender = msg.user;
-  item.textContent = isSelf ? msg.text : `${msg.user}: ${msg.text}`;
+  
+item.innerHTML = `
+  <div>${isSelf ? msg.text : `<strong>${msg.user}:</strong> ${msg.text}`}</div>
+  ${isSelf && msg.status ? `<span class="status-badge">${
+    msg.status === 'sent' ? '✓' :
+    msg.status === 'delivered' ? '✓✓' :
+    msg.status === 'seen' ? '✓✓ Seen' : ''
+  }</span>` : ''}
+`;
 
   if (isSelf) {
     const statusSpan = document.createElement('span');

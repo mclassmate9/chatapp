@@ -19,8 +19,8 @@ export async function fetchAllContacts() {
 export async function sendContactRequest(contactId) {
   const res = await fetch('/contacts/request', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ to: contactId }), // ✅ fixed key to match backend
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ to: contactId }),
   });
 
   const text = await res.text();

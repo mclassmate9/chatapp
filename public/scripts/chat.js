@@ -105,21 +105,7 @@ function addMessage(msg) {
   item.dataset.id = msg._id;
   item.dataset.sender = msg.user;
   
-item.innerHTML = `
-  <div>${isSelf ? msg.text : `<strong>${msg.user}:</strong> ${msg.text}`}</div>
-  ${isSelf && msg.status ? `<span class="status-badge">${
-    msg.status === 'sent' ? '✓' :
-    msg.status === 'delivered' ? '✓✓' :
-    msg.status === 'seen' ? '✓✓ Seen' : ''
-  }</span>` : ''}
-`;
 
-  if (isSelf) {
-    const statusSpan = document.createElement('span');
-    statusSpan.className = 'status-badge';
-    statusSpan.textContent = msg.status === 'seen' ? '✓✓ Seen' :
-                             msg.status === 'delivered' ? '✓✓' : '✓';
-    item.appendChild(statusSpan);
 
     const delBtn = document.createElement('button');
     delBtn.textContent = '🗑️';

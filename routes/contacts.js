@@ -22,12 +22,12 @@ router.post('/request', async (req, res) => {
     if (alreadyRequested) return res.status(409).json({ message: 'Request already sent or exists' });
 
     // Add contact to sender
-    from.contacts.push({ userId: toUserId, status: 'pending' });
-    await from.save();
+from.contacts.push({ userId: toUserId, status: 'pending', sentBy: fromUser });
+await from.save();
 
-    // Add contact to receiver
-    to.contacts.push({ userId: fromUser, status: 'pending' });
-    await to.save();
+// Add contact to receiver
+to.contacts.push({ userId: fromUser, status: 'pending', sentBy: fromUser }); // <= this line is key
+await to.save();
 
     res.status(200).json({ message: 'Contact request sent' });
   } catch (err) {

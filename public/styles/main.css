@@ -275,6 +275,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 #currentUser {
@@ -297,13 +298,17 @@
   background-color: #45a049;
 }
 
+  #toggleSidebarBtn {
+    display: block;
+  }
+
 .sidebar {
   position: fixed;
   top: 0;
-  right: 0;
-  width: 320px;
+  left: 0;
+  width: 100%;
   height: 100%;
-  background: #f9f9f9;
+  background: #white;
   border-left: 1px solid #ccc;
   box-shadow: -2px 0 5px rgba(0,0,0,0.1);
   padding: 15px;

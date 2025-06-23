@@ -271,6 +271,17 @@
   background: #f0f0f0;
 }
 
+ body.dark-mode {
+  background: #121212;
+  color: #eee;
+}
+body.dark-mode #messages li.message-sent {
+  background: #2e7d32;
+}
+body.dark-mode #messages li.message-received {
+  background: #333;
+}
+ 
 .chat-panel {
   flex: 1;
   display: flex;

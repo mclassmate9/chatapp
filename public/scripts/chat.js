@@ -104,30 +104,29 @@ function addMessage(msg) {
   item.classList.add(isSelf ? 'message-sent' : 'message-received');
   item.dataset.id = msg._id;
   item.dataset.sender = msg.user;
-  
-const initials = msg.user.charAt(0).toUpperCase();
 
-item.innerHTML = `
-  <div class="avatar">${initials}</div>
-  <div class="bubble">
-    ${isSelf ? msg.text : `<strong>${msg.user}:</strong> ${msg.text}`}
-    ${isSelf && msg.status ? `<span class="status-badge">${
-      msg.status === 'sent' ? '✓' :
-      msg.status === 'delivered' ? '✓✓' :
-      msg.status === 'seen' ? '✓✓ Seen' : ''
-    }</span>` : ''}
-  </div>
-`;
+  const initials = msg.user.charAt(0).toUpperCase();
 
-    const delBtn = document.createElement('button');
-    delBtn.textContent = '🗑️';
-    delBtn.onclick = () => socket.emit('delete message', msg._id);
-    delBtn.style.marginLeft = '10px';
-    delBtn.style.background = 'transparent';
-    delBtn.style.border = 'none';
-    delBtn.style.cursor = 'pointer';
-    item.appendChild(delBtn);
-  }
+  item.innerHTML = `
+    <div class="avatar">${initials}</div>
+    <div class="bubble">
+      ${isSelf ? msg.text : `<strong>${msg.user}:</strong> ${msg.text}`}
+      ${isSelf && msg.status ? `<span class="status-badge">${
+        msg.status === 'sent' ? '✓' :
+        msg.status === 'delivered' ? '✓✓' :
+        msg.status === 'seen' ? '✓✓ Seen' : ''
+      }</span>` : ''}
+    </div>
+  `;
+
+  const delBtn = document.createElement('button');
+  delBtn.textContent = '🗑️';
+  delBtn.onclick = () => socket.emit('delete message', msg._id);
+  delBtn.style.marginLeft = '10px';
+  delBtn.style.background = 'transparent';
+  delBtn.style.border = 'none';
+  delBtn.style.cursor = 'pointer';
+  item.appendChild(delBtn);
 
   messagesList.appendChild(item);
 }

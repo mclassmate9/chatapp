@@ -377,3 +377,15 @@ body.dark-mode #messages li.message-received {
   margin-right: 8px;
   font-size: 14px;
 }
+
+.bubble {
+  background: #f0f0f0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  max-width: 75%;
+}
+
+.message-sent .bubble {
+  background: #d0f0ff;
+  margin-left: auto;
+}

@@ -169,6 +169,10 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   }
 });
 
+document.getElementById('toggleThemeBtn').addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+});
+
 // ✅ Load Current User
 fetchCurrentUser().then(user => {
   username = user.username;

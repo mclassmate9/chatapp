@@ -142,6 +142,8 @@
       margin: 0;
       max-height: 60vh;
       display: flex;
+      align-items: flex-start;
+      margin-bottom: 10px;
       flex-direction: column;
       scroll-behavior: smooth;
     }

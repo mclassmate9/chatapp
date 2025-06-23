@@ -273,5 +273,6 @@ async function loadSidebarContacts() {
     approvedList.appendChild(li);
   }
 });
+}
 
 loadSidebarContacts();

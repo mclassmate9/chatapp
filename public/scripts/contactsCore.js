@@ -7,7 +7,7 @@ export async function fetchCurrentUser() {
 }
 
 export async function fetchAllContacts() {
-  const res = await fetch('/user/contacts');
+  const res = await fetch('/contacts/list');
   if (!res.ok) throw new Error('Failed to fetch contacts');
   return res.json();
 }

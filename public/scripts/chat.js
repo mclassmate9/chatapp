@@ -258,19 +258,20 @@ async function loadSidebarContacts() {
   approvedList.innerHTML = '';
 
   contacts.forEach(contact => {
-    const li = document.createElement('li');
-    li.textContent = contact.userId;
+  const li = document.createElement('li');
+  li.textContent = contact.userId;
 
-    if (contact.status === 'pending') {
-      li.innerHTML += ` <button onclick="cancelRequest('${contact.userId}')">Cancel</button>`;
-      pendingList.appendChild(li);
-    } else if (contact.status === 'received') {
-      li.innerHTML += ` <button onclick="approveRequest('${contact.userId}')">Approve</button>`;
-      receivedList.appendChild(li);
-    } else if (contact.status === 'approved') {
-      approvedList.appendChild(li);
-    }
-  });
-}
+  if (contact.status === 'pending' && contact.sentBy === username) {
+    // You sent the request
+    li.innerHTML += ` <button onclick="cancelRequest('${contact.userId}')">Cancel</button>`;
+    pendingList.appendChild(li);
+  } else if (contact.status === 'pending' && contact.sentBy !== username) {
+    // You received the request
+    li.innerHTML += ` <button onclick="approveRequest('${contact.userId}')">Approve</button>`;
+    receivedList.appendChild(li);
+  } else if (contact.status === 'approved') {
+    approvedList.appendChild(li);
+  }
+});
 
 loadSidebarContacts();

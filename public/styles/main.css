@@ -238,10 +238,16 @@
   height: 100vh;
 }
 
+@media (max-width: 768px) {
+  .chat-layout {
+    flex-direction: column;
+  }
+
 #contactSidebar {
   width: 250px;
   background-color: #eeeeee;
-  border-right: 1px solid #ccc;
+  border-right: none;
+  border-bottom: 1px solid #ccc;
   padding: 15px;
   overflow-y: auto;
 }

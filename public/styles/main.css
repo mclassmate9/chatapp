@@ -184,6 +184,7 @@ body {
 form {
   padding: 10px;
   background: #ddd;
+  flex-shrink: 0;
 }
 .input-wrapper {
   display: flex;

@@ -149,3 +149,4 @@ export async function setupContactsPage({
     await cancelContact(id);
     await renderContacts();
   };
+  }

@@ -131,43 +131,62 @@ function addMessage(msg) {
   messagesList.appendChild(item);
 }
 
-// ✅ DOM Events
-document.getElementById('form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const text = inputField.value.trim();
-  if (!selectedContact) return alert('Please select a contact first');
-  if (!text) return;
+// ✅ Wait for DOM before attaching listeners
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = inputField.value.trim();
+    if (!selectedContact) return alert('Please select a contact first');
+    if (!text) return;
 
-  socket.emit('chat message', { to: selectedContact, text });
-  inputField.value = '';
-  socket.emit('typing', false);
-});
+    socket.emit('chat message', { to: selectedContact, text });
+    inputField.value = '';
+    socket.emit('typing', false);
+  });
 
-inputField.addEventListener('input', () => socket.emit('typing'));
+  inputField.addEventListener('input', () => socket.emit('typing'));
 
-newMessageBadge.addEventListener('click', () => scrollToBottom(true));
+  newMessageBadge.addEventListener('click', () => scrollToBottom(true));
 
-messagesList.addEventListener('scroll', () => {
-  if (isAtBottom()) newMessageBadge.style.display = 'none';
+  messagesList.addEventListener('scroll', () => {
+    if (isAtBottom()) newMessageBadge.style.display = 'none';
 
-  messagesList.querySelectorAll('li').forEach(item => {
-    const rect = item.getBoundingClientRect();
-    const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+    messagesList.querySelectorAll('li').forEach(item => {
+      const rect = item.getBoundingClientRect();
+      const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
 
-    if (visible && item.dataset.id && item.dataset.sender !== username) {
-      socket.emit('message seen', item.dataset.id);
+      if (visible && item.dataset.id && item.dataset.sender !== username) {
+        socket.emit('message seen', item.dataset.id);
+      }
+    });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    if (confirm('Are you sure you want to logout?')) {
+      fetch('/logout').then(() => window.location.href = '/login.html');
     }
   });
-});
 
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  if (confirm('Are you sure you want to logout?')) {
-    fetch('/logout').then(() => window.location.href = '/login.html');
-  }
-});
+  document.getElementById('toggleThemeBtn').addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+  });
 
-document.getElementById('toggleThemeBtn').addEventListener('click', () => {
-  document.body.classList.toggle('dark-mode');
+  document.getElementById('addContactFormSidebar').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const contactId = document.getElementById('contactIdSidebar').value.trim();
+    if (!contactId) return;
+
+    const msg = await sendContactRequest(contactId);
+    alert(msg);
+    document.getElementById('contactIdSidebar').value = '';
+    loadSidebarContacts();
+  });
+
+  document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
+    document.getElementById('contactsSidebar').classList.toggle('hidden');
+  });
+
+  loadSidebarContacts();
 });
 
 // ✅ Load Current User
@@ -213,18 +232,7 @@ addContactBtn.addEventListener('click', () => {
     .catch(err => alert(err.message));
 });
 
-// ✅ Contact Sidebar
-document.getElementById('addContactFormSidebar').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const contactId = document.getElementById('contactIdSidebar').value.trim();
-  if (!contactId) return;
-
-  const msg = await sendContactRequest(contactId);
-  alert(msg);
-  document.getElementById('contactIdSidebar').value = '';
-  loadSidebarContacts();
-});
-
+// ✅ Sidebar contact request handlers
 window.approveRequest = async (id) => {
   await approveContact(id);
   socket.emit('contact update');
@@ -235,14 +243,11 @@ window.cancelRequest = async (id) => {
   socket.emit('contact update');
 };
 
-document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
-  document.getElementById('contactsSidebar').classList.toggle('hidden');
-});
-
+// ✅ Load sidebar contacts
 async function loadSidebarContacts() {
   const res = await fetch('/contacts/full');
   const data = await res.json();
-  const contacts = data.contacts || data; // support both formats
+  const contacts = data.contacts || data;
 
   if (!Array.isArray(contacts)) {
     console.error('Expected contacts array, got:', contacts);
@@ -258,21 +263,17 @@ async function loadSidebarContacts() {
   approvedList.innerHTML = '';
 
   contacts.forEach(contact => {
-  const li = document.createElement('li');
-  li.textContent = contact.userId;
+    const li = document.createElement('li');
+    li.textContent = contact.userId;
 
-  if (contact.status === 'pending' && contact.sentBy === username) {
-    // You sent the request
-    li.innerHTML += ` <button onclick="cancelRequest('${contact.userId}')">Cancel</button>`;
-    pendingList.appendChild(li);
-  } else if (contact.status === 'pending' && contact.sentBy !== username) {
-    // You received the request
-    li.innerHTML += ` <button onclick="approveRequest('${contact.userId}')">Approve</button>`;
-    receivedList.appendChild(li);
-  } else if (contact.status === 'approved') {
-    approvedList.appendChild(li);
-  }
-});
+    if (contact.status === 'pending' && contact.sentBy === username) {
+      li.innerHTML += ` <button onclick="cancelRequest('${contact.userId}')">Cancel</button>`;
+      pendingList.appendChild(li);
+    } else if (contact.status === 'pending' && contact.sentBy !== username) {
+      li.innerHTML += ` <button onclick="approveRequest('${contact.userId}')">Approve</button>`;
+      receivedList.appendChild(li);
+    } else if (contact.status === 'approved') {
+      approvedList.appendChild(li);
+    }
+  });
 }
-
-loadSidebarContacts();

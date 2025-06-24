@@ -114,6 +114,7 @@ export async function setupContactsPage({
   message.style.color = 'red';
   message.textContent = err.message || 'Something went wrong';
 }
+});
 
   async function renderContacts() {
     const contacts = await fetchAllContacts();

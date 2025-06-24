@@ -84,6 +84,7 @@ body {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  max-height: 100dvh;
 }
 
 .chat-container {
@@ -156,6 +157,7 @@ body {
   flex-direction: column;
   gap: 10px;
   scroll-behavior: smooth;
+  min-height: 0;
 }
 #messages li {
   padding: 10px 14px;

@@ -189,6 +189,9 @@ form {
   padding: 10px;
   background: #ddd;
   flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 .input-wrapper {
   display: flex;

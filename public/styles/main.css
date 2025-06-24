@@ -6,10 +6,7 @@ body {
   height: 100vh;
   overflow: hidden;
 }
-html, body{
-  height: 100%;
-  overscroll-behavior: none;
-}
+
 
 .chat-layout {
   display: flex;

@@ -16,7 +16,6 @@
     <!-- ✅ Contacts Sidebar -->
     <aside id="contactSidebar">
       <h3>Your Contacts</h3>
-
       <ul id="contactList"></ul>
 
       <input type="text" id="newContactId" placeholder="Enter user ID">
@@ -31,7 +30,6 @@
     <!-- ✅ Main Chat Panel -->
     <main class="chat-panel">
       <div class="chat-container">
-        <!-- Header -->
         <div class="chat-header">
           <span id="user-status" class="offline">Offline</span>
           <span id="chat-username">Chat</span>
@@ -41,14 +39,11 @@
           </select>
         </div>
 
-        <!-- Typing + Badge -->
         <div id="typingIndicator"></div>
         <div id="newMessageBadge">New Messages</div>
 
-        <!-- Messages -->
         <ul id="messages"></ul>
 
-        <!-- Message Input -->
         <form id="form">
           <div class="input-wrapper">
             <input id="input" type="text" autocomplete="off" placeholder="Type your message..." />
@@ -59,8 +54,34 @@
     </main>
   </div>
 
-  <!-- ✅ Mobile Toggle Button for Sidebar -->
+  <!-- ✅ Toggle Sidebar Button -->
   <button id="toggleSidebarBtn" class="sidebar-toggle">👥 Contacts</button>
+
+  <!-- ✅ Hidden Sidebar for Contact Requests -->
+  <div id="contactsSidebar" class="sidebar hidden">
+    <div class="sidebar-header">
+      <h3>Manage Contacts</h3>
+      <button onclick="toggleSidebar()">✖</button>
+    </div>
+
+    <div id="sidebarContent">
+      <form id="addContactFormSidebar">
+        <input type="text" id="contactIdSidebar" placeholder="Enter User ID" required />
+        <button type="submit">Add Contact</button>
+      </form>
+
+      <button id="toggleThemeBtn">🌓</button>
+
+      <h4>Pending Requests</h4>
+      <ul id="pendingListSidebar"></ul>
+
+      <h4>Received Requests</h4>
+      <ul id="receivedListSidebar"></ul>
+
+      <h4>Approved Contacts</h4>
+      <ul id="approvedListSidebar"></ul>
+    </div>
+  </div>
 
   <!-- ✅ Scripts -->
   <script src="/socket.io/socket.io.js"></script>

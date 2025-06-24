@@ -17,6 +17,10 @@ export async function fetchAllContacts() {
 
 // ✅ Send a contact request
 export async function sendContactRequest(contactId) {
+  if (!contactId || contactId.trim() === '') {
+    throw new Error('Please enter a valid contact ID');
+  }
+
   const res = await fetch('/contacts/request', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -24,7 +28,16 @@ export async function sendContactRequest(contactId) {
   });
 
   const text = await res.text();
-  if (!res.ok) throw new Error(text);
+
+  if (!res.ok) {
+    try {
+      const json = JSON.parse(text);
+      throw new Error(json.message || 'Failed to send request');
+    } catch {
+      throw new Error(text);
+    }
+  }
+
   return text;
 }
 

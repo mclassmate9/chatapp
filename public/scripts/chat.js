@@ -133,47 +133,52 @@ function addMessage(msg) {
 
 // ✅ Wait for DOM before attaching listeners
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const text = inputField.value.trim();
-    if (!selectedContact) return alert('Please select a contact first');
-    if (!text) return;
+  const form = document.getElementById('form');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const toggleThemeBtn = document.getElementById('toggleThemeBtn');
+  const addContactFormSidebar = document.getElementById('addContactFormSidebar');
+  const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+  const contactsSidebar = document.getElementById('contactsSidebar');
 
-    socket.emit('chat message', { to: selectedContact, text });
-    inputField.value = '';
-    socket.emit('typing', false);
-  });
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = inputField.value.trim();
+      if (!selectedContact) return alert('Please select a contact first');
+      if (!text) return;
+  
+      socket.emit('chat message', { to: selectedContact, text });
+      inputField.value = '';
+      socket.emit('typing', false);
+    });
+  }
 
-  inputField.addEventListener('input', () => socket.emit('typing'));
-
-  newMessageBadge.addEventListener('click', () => scrollToBottom(true));
-
-  messagesList.addEventListener('scroll', () => {
+  inputField?.addEventListener('input', () => socket.emit('typing'));
+  newMessageBadge?.addEventListener('click', () => scrollToBottom(true));
+  messagesList?.addEventListener('scroll', () => {
     if (isAtBottom()) newMessageBadge.style.display = 'none';
-
     messagesList.querySelectorAll('li').forEach(item => {
       const rect = item.getBoundingClientRect();
       const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-
       if (visible && item.dataset.id && item.dataset.sender !== username) {
         socket.emit('message seen', item.dataset.id);
       }
     });
   });
 
-  document.getElementById('logoutBtn').addEventListener('click', () => {
+  logoutBtn?.addEventListener('click', () => {
     if (confirm('Are you sure you want to logout?')) {
       fetch('/logout').then(() => window.location.href = '/login.html');
     }
   });
 
-  document.getElementById('toggleThemeBtn').addEventListener('click', () => {
+  toggleThemeBtn?.addEventListener('click', () => {
     document.body.classList.toggle('dark-mode');
   });
 
-  document.getElementById('addContactFormSidebar').addEventListener('submit', async (e) => {
+  addContactFormSidebar?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const contactId = document.getElementById('contactIdSidebar').value.trim();
+    const contactId = document.getElementById('contactIdSidebar')?.value.trim();
     if (!contactId) return;
 
     const msg = await sendContactRequest(contactId);
@@ -182,8 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSidebarContacts();
   });
 
-  document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
-    document.getElementById('contactsSidebar').classList.toggle('hidden');
+  toggleSidebarBtn?.addEventListener('click', () => {
+    contactsSidebar?.classList.toggle('hidden');
   });
 
   loadSidebarContacts();

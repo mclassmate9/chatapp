@@ -224,17 +224,22 @@ fetch('/user/approved')
   });
 
 // ✅ Add Contact via mini input
-addContactBtn.addEventListener('click', () => {
+addContactBtn.addEventListener('click', async () => {
   const contactId = newContactId.value.trim();
-  if (!contactId) return;
+  if (!contactId) return alert('Please enter a contact ID');
 
-  sendContactRequest(contactId)
-    .then(alert)
-    .then(() => {
-      newContactId.value = '';
-      loadSidebarContacts();
-    })
-    .catch(err => alert(err.message));
+  if (contactId === username) {
+    return alert('You cannot add yourself as a contact');
+  }
+
+  try {
+    const msg = await sendContactRequest(contactId);
+    alert(msg);
+    newContactId.value = '';
+    loadSidebarContacts();
+  } catch (err) {
+    alert(err.message);
+  }
 });
 
 // ✅ Sidebar contact request handlers

@@ -105,15 +105,15 @@ export async function setupContactsPage({
       if (!contactId) return;
 
       try {
-        const msg = await sendContactRequest(contactId);
-        message.textContent = msg;
-        input.value = '';
-        await renderContacts();
-      } catch (err) {
-        message.textContent = err.message;
-      }
-    });
-  }
+  const msg = await sendContactRequest(contactId);
+  message.style.color = 'green';
+  message.textContent = msg;
+  input.value = '';
+  await renderContacts();
+} catch (err) {
+  message.style.color = 'red';
+  message.textContent = err.message || 'Something went wrong';
+}
 
   async function renderContacts() {
     const contacts = await fetchAllContacts();
